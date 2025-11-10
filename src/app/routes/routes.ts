@@ -4,6 +4,7 @@ import { authRoutes } from '../modules/auth/auth.routes';
 import { serviceRoutes } from '../modules/service/service.routes';
 import { industryRouter } from '../modules/industri/industri.routes';
 import { blogRouter } from '../modules/blog/blog.routes';
+import { newsletterRouter } from '../modules/newsletter/newsletter.routes';
 
 const router = Router();
 
@@ -27,6 +28,10 @@ const moduleRoutes = [
   {
     path: '/blog',
     route: blogRouter,
+  },
+  {
+    path: '/newsletter',
+    route: newsletterRouter,
   },
 ];
 

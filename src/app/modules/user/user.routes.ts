@@ -21,19 +21,14 @@ router.put(
   userController.updateMyProfile,
 );
 
-router.get('/get-user/:id', auth(userRole.Admin), userController.getUserById);
-
 router.put(
-  '/update-user/:id',
+  '/:id',
   auth(userRole.Admin),
   fileUploader.upload.single('profileImage'),
   userController.updateUserById,
 );
 
-router.delete(
-  '/delete-user/:id',
-  auth(userRole.Admin),
-  userController.deleteUserById,
-);
+router.delete('/:id', auth(userRole.Admin), userController.deleteUserById);
+router.get('/:id', userController.getUserById);
 
 export const userRoutes = router;

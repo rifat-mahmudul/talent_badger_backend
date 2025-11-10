@@ -74,6 +74,9 @@ const getAllUser = async (params: any, options: IOption) => {
 
 const getUserById = async (id: string) => {
   const result = await User.findById(id);
+  if (!result) {
+    throw new AppError(404, 'User not found');
+  }
   return result;
 };
 
@@ -84,9 +87,6 @@ const updateUserById = async (
 ) => {
   if (file) {
     const uploadProfile = await fileUploader.uploadToCloudinary(file);
-    if (uploadProfile?.secure_url) {
-      throw new AppError(400, 'Failed to upload profile image');
-    }
     payload.profileImage = uploadProfile.secure_url;
   }
   const result = await User.findByIdAndUpdate(id, payload, { new: true });
@@ -95,6 +95,9 @@ const updateUserById = async (
 
 const deleteUserById = async (id: string) => {
   const result = await User.findByIdAndDelete(id);
+  if (!result) {
+    throw new AppError(404, 'User not found');
+  }
   return result;
 };
 
