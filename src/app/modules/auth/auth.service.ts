@@ -112,7 +112,7 @@ const forgotPassword = async (email: string) => {
   return { message: 'OTP sent to your email' };
 };
 
-const verifyEmail = async (email: string, otp: string) => {
+const verifyEmailOTP = async (email: string, otp: string) => {
   const user = await User.findOne({ email });
   if (!user) throw new AppError(401, 'User not found');
 
@@ -164,5 +164,6 @@ export const authService = {
   loginUser,
   refreshToken,
   forgotPassword,
+  verifyEmailOTP,
   resetPassword,
 };
