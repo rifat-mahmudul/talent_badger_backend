@@ -6,5 +6,8 @@ const router = express.Router();
 
 router.post('/', auth(userRole.Admin), serviceController.createService);
 router.get('/', serviceController.getAllServices);
+router.get('/:id', serviceController.getSingleService);
+router.put('/:id', auth(userRole.Admin), serviceController.updateService);
+router.delete('/:id', auth(userRole.Admin), serviceController.deleteService);
 
 export const serviceRoutes = router;

@@ -4,7 +4,8 @@ import sendResponse from '../../utils/sendResponse';
 import { serviceServices } from './service.service';
 
 const createService = catchAsync(async (req, res) => {
-  const result = await serviceServices.createService(req.body);
+  const user = req.user?.id;
+  const result = await serviceServices.createService(user, req.body);
   sendResponse(res, {
     statusCode: 201,
     success: true,
@@ -14,19 +15,60 @@ const createService = catchAsync(async (req, res) => {
 });
 
 const getAllServices = catchAsync(async (req, res) => {
-  const filters = pick(req.query, ['searchTerm', 'title', 'category']);
+  const filters = pick(req.query, [
+    'searchTerm',
+    'serviceName',
+    'category',
+    'description',
+    'status',
+  ]);
   const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
   const result = await serviceServices.getAllServices(filters, options);
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: 'Services retrieved successfully',
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
+const getSingleService = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await serviceServices.getSingleService(id);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Service retrieved successfully',
     data: result,
   });
 });
 
+const updateService = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await serviceServices.updateService(id, req.body);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Service updated successfully',
+    data: result,
+  });
+});
+const deleteService = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await serviceServices.deleteService(id);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Service deleted successfully',
+    data: result,
+  });
+});
 
 export const serviceController = {
   createService,
   getAllServices,
+  getSingleService,
+  updateService,
+  deleteService,
 };

@@ -59,9 +59,21 @@ const forgotPassword = catchAsync(async (req, res) => {
   });
 });
 
+const verifyEmailOTP = catchAsync(async (req, res) => {
+  const { email, otp } = req.body;
+  const result = await authService.verifyEmailOTP(email, otp);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'OTP verified successfully',
+    data: result,
+  });
+});
+
 const resetPassword = catchAsync(async (req, res) => {
   const { email, newPassword } = req.body;
-  const result = await authService.resetPassword(email,  newPassword);
+  const result = await authService.resetPassword(email, newPassword);
 
   // Set the new refreshToken in cookie
   res.cookie('refreshToken', result.refreshToken, {
@@ -95,6 +107,7 @@ export const authController = {
   loginUser,
   refreshToken,
   forgotPassword,
+  verifyEmailOTP,
   resetPassword,
   logoutUser,
 };

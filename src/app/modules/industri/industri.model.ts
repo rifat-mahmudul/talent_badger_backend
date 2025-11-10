@@ -1,29 +1,24 @@
 import mongoose from 'mongoose';
-import { IService } from './service.interface';
+import { IIndustry } from './industri.interface';
 
-const serviceSchema = new mongoose.Schema<IService>(
+const industrySchema = new mongoose.Schema<IIndustry>(
   {
-    serviceName: {
+    name: {
       type: String,
       required: true,
       unique: true,
-    },
-    category: {
-      type: String,
-      required: true,
     },
     status: {
       type: String,
       enum: ['active', 'inactive'],
       default: 'active',
     },
-    description: {
+    discription: {
       type: String,
     },
-    createdBy: {
+    createBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
     },
     users: [
       {
@@ -35,5 +30,5 @@ const serviceSchema = new mongoose.Schema<IService>(
   { timestamps: true },
 );
 
-const Service = mongoose.model<IService>('Service', serviceSchema);
-export default Service;
+const Industry = mongoose.model<IIndustry>('Industry', industrySchema);
+export default Industry;

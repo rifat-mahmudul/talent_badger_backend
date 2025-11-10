@@ -45,15 +45,16 @@ const userSchema = new mongoose.Schema<IUser>(
     otp: { type: String },
     otpExpiry: { type: Date },
     lastLogin: { type: Date },
+
+    stripeAccountId: { type: String },
   },
   {
     timestamps: true,
   },
 );
 
-
-userSchema.pre("save",async function (next) {
-  if (this.isModified("password")) {
+userSchema.pre('save', async function (next) {
+  if (this.isModified('password')) {
     const hashedPassword = await bcrypt.hash(this.password, 10);
     this.password = hashedPassword;
   }
