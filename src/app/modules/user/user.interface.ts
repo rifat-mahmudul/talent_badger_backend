@@ -3,31 +3,32 @@ import { Types } from 'mongoose';
 export interface IUser {
   email: string;
   password: string;
-  role: "client"|"engineer"|"admin";
-  status: "pending"|"active"|"rejected"|"suspended";
+  role: 'user' | 'engineer' | 'admin';
+  status: 'pending' | 'active' | 'rejected' | 'suspended';
 
   firstName: string;
-  lastName: string;
+  lastName?: string;
   phone?: string;
   profileImage?: string;
 
-  title?: string;
+  professionTitle?: string;
   bio?: string;
-  hourlyRate?: number;
+  rate?: number;
   experience?: number;
   skills?: string[];
-  certifications?: string[];
-  portfolio?: string[];
+  expertise?: string[];
+  certifications?: string;
+  cv?: string;
+  ndaagreeement?: string;
+
   companyName?: string;
   industry?: Types.ObjectId;
   service?: Types.ObjectId;
 
-  address?: string;
-  city?: string;
-  country?: string;
+  location?: string;
 
-  isEmailVerified: boolean;
+  verified: boolean;
   otp?: string;
-  otpExpires?: Date;
+  otpExpiry?: Date;
   lastLogin?: Date;
 }

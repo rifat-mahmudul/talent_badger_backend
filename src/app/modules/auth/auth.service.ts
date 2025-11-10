@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { JwtPayload, Secret } from 'jsonwebtoken';
 import config from '../../config';
 import AppError from '../../error/appError';
@@ -8,54 +10,39 @@ import sendMailer from '../../helper/sendMailer';
 
 import bcrypt from 'bcryptjs';
 import createOtpTemplate from '../../utils/createOtpTemplate';
-import createUserSuccessfully from '../../utils/createUserSuccessfully';
+
+import userRole from '../user/user.constan';
 
 const registerUser = async (payload: Partial<IUser>) => {
   const exist = await User.findOne({ email: payload.email });
   if (exist) throw new AppError(400, 'User already exists');
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+  const idx = Math.floor(Math.random() * 100);
+  payload.profileImage = `https://avatar.iran.liara.run/public/${idx}.png`;
 
-  const user = await User.create({
-    ...payload,
-    otp,
-    otpExpiry,
-    verified: false,
-  });
+  if (payload.role === userRole.Engineer) {
+    const requiredFields = [
+      'professionTitle',
+      'location',
+      'skills',
+      'industry',
+      'service',
+      'bio',
+    ];
 
-  // send OTP email
-  await sendMailer(
-    user.email,
-    user.name,
-    createOtpTemplate(otp, user.email, 'Your Company'),
-  );
-
-  return {
-    message: 'Registration successful. Please verify your email.',
-  };
-};
-
-const verifyEmail = async (email: string, otp: string) => {
-  const user = await User.findOne({ email });
-  if (!user) throw new AppError(404, 'User not found');
-
-  if (user.otp !== otp || !user.otpExpiry || user.otpExpiry < new Date()) {
-    throw new AppError(400, 'Invalid or expired OTP');
+    for (const field of requiredFields) {
+      if (!payload[field as keyof IUser]) {
+        throw new AppError(
+          400,
+          `Missing required field for engineer: ${field}`,
+        );
+      }
+    }
   }
 
-  user.verified = true;
-  user.otp = undefined;
-  user.otpExpiry = undefined;
-  await user.save();
+  const result = await User.create(payload);
 
-  await sendMailer(
-    user.email,
-    user.name,
-    createUserSuccessfully(user.name, user.email, 'Your Company'),
-  );
-
-  return { message: 'Email verified successfully' };
+  return result;
 };
 
 const loginUser = async (payload: Partial<IUser>) => {
@@ -68,8 +55,7 @@ const loginUser = async (payload: Partial<IUser>) => {
     user.password,
   );
   if (!isPasswordMatched) throw new AppError(401, 'Password not matched');
-  if (!user.verified) throw new AppError(403, 'Please verify your email first');
-
+  if (user.status !== 'active') throw new AppError(401, 'User is not active');
   const accessToken = jwtHelpers.genaretToken(
     { id: user._id, role: user.role, email: user.email },
     config.jwt.accessTokenSecret as Secret,
@@ -81,6 +67,9 @@ const loginUser = async (payload: Partial<IUser>) => {
     config.jwt.refreshTokenSecret as Secret,
     config.jwt.refreshTokenExpires,
   );
+
+  user.lastLogin = new Date();
+  await user.save();
 
   const { password, ...userWithoutPassword } = user.toObject();
   return { accessToken, refreshToken, user: userWithoutPassword };
@@ -111,29 +100,39 @@ const forgotPassword = async (email: string) => {
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otp = otp;
-  user.otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+  user.otpExpiry = new Date(Date.now() + 20 * 60 * 1000); // 20 mins
   await user.save();
 
   await sendMailer(
     user.email,
-    user.name,
-    createOtpTemplate(otp, user.email, 'Your Company'),
+    user.firstName + ' ' + user.lastName,
+    createOtpTemplate(otp, user.email, 'Circuitdaddy'),
   );
 
   return { message: 'OTP sent to your email' };
 };
 
-const resetPassword = async (
-  email: string,
-  otp: string,
-  newPassword: string,
-) => {
+const verifyEmail = async (email: string, otp: string) => {
   const user = await User.findOne({ email });
-  if (!user) throw new AppError(404, 'User not found');
+  if (!user) throw new AppError(401, 'User not found');
 
   if (user.otp !== otp || !user.otpExpiry || user.otpExpiry < new Date()) {
     throw new AppError(400, 'Invalid or expired OTP');
   }
+
+  user.verified = true;
+  user.otp = undefined;
+  user.otpExpiry = undefined;
+  await user.save();
+
+  return { message: 'Email verified successfully' };
+};
+
+const resetPassword = async (email: string, newPassword: string) => {
+  const user = await User.findOne({ email });
+  if (!user) throw new AppError(404, 'User not found');
+  if (!user.verified) throw new AppError(400, 'Email not verified');
+  if (!newPassword) throw new AppError(400, 'Password is required');
 
   user.password = newPassword;
   user.otp = undefined;
@@ -154,7 +153,6 @@ const resetPassword = async (
 
   const { password, ...userWithoutPassword } = user.toObject();
   return {
-    message: 'Password reset successfully',
     accessToken,
     refreshToken,
     user: userWithoutPassword,
@@ -163,7 +161,6 @@ const resetPassword = async (
 
 export const authService = {
   registerUser,
-  verifyEmail,
   loginUser,
   refreshToken,
   forgotPassword,
