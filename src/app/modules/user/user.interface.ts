@@ -33,4 +33,15 @@ export interface IUser {
   lastLogin?: Date;
 
   stripeAccountId?: string;
+
+  // financial + badges
+  walletBalance?: number; // for clients
+  balance?: number; // engineer pending payout
+  totalEarned?: number;
+  completedProjectsCount?: number;
+  totalRating?: number;
+  ratingCount?: number;
+  avgRating?: number;
+  badge?: string;
+  level?: number;
 }
