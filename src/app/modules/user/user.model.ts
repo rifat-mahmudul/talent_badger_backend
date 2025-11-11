@@ -47,6 +47,16 @@ const userSchema = new mongoose.Schema<IUser>(
     lastLogin: { type: Date },
 
     stripeAccountId: { type: String },
+
+    walletBalance: { type: Number, default: 0 },
+    balance: { type: Number, default: 0 },
+    totalEarned: { type: Number, default: 0 },
+    completedProjectsCount: { type: Number, default: 0 },
+    totalRating: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
+    avgRating: { type: Number, default: 0 },
+    badge: [{ type: String, default: 'none' }],
+    level: { type: Number, default: 0 },
   },
   {
     timestamps: true,
