@@ -63,7 +63,10 @@ const getAllServices = async (params: any, options: IOption) => {
 };
 
 const getSingleService = async (id: string) => {
-  const result = await Service.findById(id);
+  const result = await Service.findById(id).populate({
+    path: 'users',
+    select: '-password'
+  });
   if (!result) throw new AppError(400, 'Service not found');
   return result;
 };

@@ -182,6 +182,23 @@ const resetPassword = async (email: string, newPassword: string) => {
   };
 };
 
+const changePassword = async (
+  userId: string,
+  oldPassword: string,
+  newPassword: string,
+) => {
+  const exist = await User.findById(userId);
+  if (!exist) throw new AppError(401, 'User not found');
+
+  const isPasswordMatched = await bcrypt.compare(oldPassword, exist.password);
+  if (!isPasswordMatched) throw new AppError(401, 'Password not matched');
+
+  exist.password = newPassword;
+  await exist.save();
+
+  return { message: 'Password changed successfully' };
+};
+
 export const authService = {
   registerUser,
   loginUser,
@@ -189,4 +206,5 @@ export const authService = {
   forgotPassword,
   verifyEmailOTP,
   resetPassword,
+  changePassword,
 };

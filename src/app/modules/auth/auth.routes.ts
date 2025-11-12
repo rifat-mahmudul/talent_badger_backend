@@ -1,5 +1,7 @@
 import express from 'express';
 import { authController } from './auth.controller';
+import auth from '../../middlewares/auth';
+import userRole from '../user/user.constan';
 
 const router = express.Router();
 
@@ -10,5 +12,10 @@ router.post('/forgot-password', authController.forgotPassword);
 router.post('/verify-otp', authController.verifyEmailOTP);
 router.post('/reset-password', authController.resetPassword);
 router.post('/logout', authController.logoutUser);
+router.post(
+  '/change-password',
+  auth(userRole.Admin, userRole.Engineer, userRole.User),
+  authController.changePassword,
+);
 
 export const authRoutes = router;
