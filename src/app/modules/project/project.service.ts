@@ -5,6 +5,7 @@ import User from '../user/user.model';
 import Project from './project.model';
 import { Types } from 'mongoose';
 import pagination, { IOption } from '../../helper/pagenation';
+import sendMailer from '../../helper/sendMailer';
 
 // Create Project
 const createProject = async (
@@ -66,7 +67,7 @@ const getMyAllProjects = async (
 
   const andCondition: any[] = [];
 
-  const searchableFields = ['title', 'description', 'status', 'progress'];
+  const searchableFields = ['title', 'description', 'status'];
 
   // Search by term
   if (searchTerm) {
@@ -199,9 +200,64 @@ const updateProgress = async (
   // If progress reaches 100%, mark completed
   if (project.progress === 100) {
     project.status = 'completed';
+    project.lastUpdated = new Date();
+    const user = await User.findById(project.client);
+    if (user?.email) {
+      sendMailer(user.email, 'Project Completed', project.title);
+    }
   }
 
   await project.save();
+  return project;
+};
+
+const updateMyProject = async (
+  projectId: string,
+  userId: string,
+  payload: Partial<IProject>,
+  file?: Express.Multer.File,
+) => {
+  const project = await Project.findById(projectId);
+  if (!project) throw new AppError(404, 'Project not found');
+
+  if (project.client.toString() !== userId) {
+    throw new AppError(403, 'Only the client can update the project');
+  }
+
+  if (file) {
+    const uploadResult = await fileUploader.uploadToCloudinary(file);
+    if (uploadResult?.secure_url) {
+      payload.ndaAgreement = [uploadResult.secure_url];
+    } else {
+      throw new AppError(400, 'Failed to upload NDA document');
+    }
+  }
+
+  const updatedProject = await Project.findByIdAndUpdate(projectId, payload, {
+    new: true,
+  });
+
+  return updatedProject;
+};
+
+const deleteProject = async (projectId: string, userId: string) => {
+  const project = await Project.findById(projectId);
+  if (!project) throw new AppError(404, 'Project not found');
+
+  if (project.client.toString() !== userId) {
+    throw new AppError(403, 'Only the client can delete the project');
+  }
+
+  await Project.findByIdAndDelete(projectId);
+};
+
+const singleProject = async (projectId: string) => {
+  const project = await Project.findById(projectId)
+    .populate('client', 'firstName lastName email profileImage')
+    .populate('engineers', 'firstName lastName email profileImage');
+
+  if (!project) throw new AppError(404, 'Project not found');
+
   return project;
 };
 
@@ -211,4 +267,7 @@ export const projectService = {
   rejectProject,
   updateProgress,
   getMyAllProjects,
+  updateMyProject,
+  deleteProject,
+  singleProject,
 };

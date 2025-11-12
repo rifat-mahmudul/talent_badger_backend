@@ -6,6 +6,20 @@ import userRole from './user.constan';
 
 const router = express.Router();
 
+// Engineer Stripe account create
+router.post(
+  '/create-stripe-account',
+  auth(userRole.Engineer),
+  userController.createEngineerStripeAccount,
+);
+
+// Engineer Stripe dashboard link
+router.get(
+  '/dashboard-link',
+  auth(userRole.Engineer),
+  userController.getEngineerStripeAccount,
+);
+
 router.post('/create-user', userController.createUser);
 router.get('/all-user', userController.getAllUser);
 router.get(

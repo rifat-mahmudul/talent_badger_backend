@@ -1,8 +1,12 @@
+import config from '../../config';
 import AppError from '../../error/appError';
 import { fileUploader } from '../../helper/fileUploder';
 import pagination, { IOption } from '../../helper/pagenation';
 import { IUser } from './user.interface';
 import User from './user.model';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(config.stripe.secretKey!);
 
 const createUser = async (payload: IUser) => {
   const isExist = await User.findOne({ email: payload.email });
@@ -128,6 +132,74 @@ const updateMyProfile = async (
   return result;
 };
 
+// engineer stripe account create
+const createEngineerStripeAccount = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+  if (user.stripeAccountId) {
+    throw new AppError(400, 'User already has a stripe account');
+  }
+
+  const account = await stripe.accounts.create({
+    type: 'express',
+    email: user.email,
+    business_type: 'individual',
+    individual: {
+      first_name: user.firstName,
+      last_name: user.lastName,
+      email: user.email,
+      // phone: user.phone,
+    },
+    business_profile: {
+      name: user.companyName,
+      product_description: user.professionTitle,
+      url: 'https://your-default-website.com',
+    },
+    settings: {
+      payments: {
+        statement_descriptor: user.companyName,
+      },
+    },
+  });
+  if (!account) {
+    throw new AppError(400, 'Failed to create stripe account');
+  }
+
+  user.stripeAccountId = account.id;
+  await user.save();
+
+  const accountLink = await stripe.accountLinks.create({
+    account: account.id,
+    refresh_url: `${config.frontendUrl}/connect/refresh`,
+    return_url: `${config.frontendUrl}/stripe-account-success`,
+    type: 'account_onboarding',
+  });
+
+  return {
+    url: accountLink.url,
+    message: 'Stripe onboarding link created successfully',
+  };
+};
+
+const getEngineerStripeAccount = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+  if (!user.stripeAccountId) {
+    throw new AppError(400, 'User does not have a stripe account');
+  }
+
+  const account = await stripe.accounts.createLoginLink(user.stripeAccountId);
+  if (!account) {
+    throw new AppError(400, 'Failed to retrieve stripe account');
+  }
+
+  return account;
+};
+
 export const userService = {
   createUser,
   getAllUser,
@@ -136,4 +208,6 @@ export const userService = {
   deleteUserById,
   getMyProfile,
   updateMyProfile,
+  createEngineerStripeAccount,
+  getEngineerStripeAccount,
 };

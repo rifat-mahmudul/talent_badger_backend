@@ -6,6 +6,7 @@ import { industryRouter } from '../modules/industri/industri.routes';
 import { blogRouter } from '../modules/blog/blog.routes';
 import { newsletterRouter } from '../modules/newsletter/newsletter.routes';
 import { projectRouter } from '../modules/project/project.route';
+import { contactRouter } from '../modules/contact/contact.routes';
 
 const router = Router();
 
@@ -37,6 +38,10 @@ const moduleRoutes = [
   {
     path: '/project',
     route: projectRouter,
+  },
+  {
+    path: '/contact',
+    route: contactRouter,
   },
 ];
 

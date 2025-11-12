@@ -93,10 +93,60 @@ const getMyProjects = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const updateMyProject = catchAsync(async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const clientId = req.user.id;
+  const file = req.file as Express.Multer.File;
+  const formData = req.body.data ? JSON.parse(req.body.data) : req.body;
+
+  const project = await projectService.updateMyProject(
+    projectId,
+    clientId,
+    formData,
+    file,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Project updated successfully',
+    data: project,
+  });
+});
+
+const deleteProject = catchAsync(async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const clientId = req.user.id;
+
+  const project = await projectService.deleteProject(projectId, clientId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Project deleted successfully',
+    data: project,
+  });
+});
+
+const singleProject = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const project = await projectService.singleProject(id);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Project fetched successfully',
+    data: project,
+  });
+});
+
 export const projectController = {
   createProject,
   approveProject,
   updateProgress,
   rejectProject,
   getMyProjects,
+  updateMyProject,
+  deleteProject,
+  singleProject,
 };

@@ -21,6 +21,19 @@ router.get(
   projectController.getMyProjects,
 );
 
+router.put(
+  '/my/:projectId',
+  auth(userRole.User),
+  fileUploader.upload.single('ndaAgreement'),
+  projectController.updateMyProject,
+);
+
+router.delete(
+  '/my/:projectId',
+  auth(userRole.User),
+  projectController.deleteProject,
+);
+
 // Engineer approves project
 router.put(
   '/:projectId/approve',
@@ -42,11 +55,7 @@ router.put(
   projectController.updateProgress,
 );
 
-// Get projects for logged in user
-router.get(
-  '/my-projects',
-  auth(userRole.User, userRole.Engineer),
-  projectController.getMyProjects,
-);
+// single project
+router.get('/:id', projectController.singleProject);
 
 export const projectRouter = router;
