@@ -138,7 +138,7 @@ const forgotPassword = async (email: string) => {
 const verifyEmailOTP = async (email: string, otp: string) => {
   const user = await User.findOne({ email });
   if (!user) throw new AppError(401, 'User not found');
-
+  console.log(user.otp, otp, user.otpExpiry);
   if (user.otp !== otp || !user.otpExpiry || user.otpExpiry < new Date()) {
     throw new AppError(400, 'Invalid or expired OTP');
   }
