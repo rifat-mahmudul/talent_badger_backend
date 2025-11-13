@@ -8,6 +8,7 @@ import { newsletterRouter } from '../modules/newsletter/newsletter.routes';
 import { projectRouter } from '../modules/project/project.route';
 import { contactRouter } from '../modules/contact/contact.routes';
 import { reviewRouter } from '../modules/review/review.routes';
+import { bookingRouter } from '../modules/booking/booking.routes';
 
 const router = Router();
 
@@ -47,6 +48,10 @@ const moduleRoutes = [
   {
     path: '/review',
     route: reviewRouter,
+  },
+  {
+    path: '/booking',
+    route: bookingRouter,
   },
 ];
 

@@ -160,6 +160,7 @@ const resetPassword = async (email: string, newPassword: string) => {
   user.password = newPassword;
   user.otp = undefined;
   user.otpExpiry = undefined;
+  user.verified = false;
   await user.save();
 
   // Auto-login after reset
