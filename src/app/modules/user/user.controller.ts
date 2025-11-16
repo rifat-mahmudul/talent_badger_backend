@@ -88,15 +88,19 @@ const getMyProfile = catchAsync(async (req, res) => {
 });
 
 const updateMyProfile = catchAsync(async (req, res) => {
-  const file = req.files as {
-    [fieldname: string]: Express.Multer.File[];
-  };
+  const filesObj = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const filesWithField = Object.keys(filesObj).flatMap((fieldname) =>
+    filesObj[fieldname].map((file) => ({ ...file, fieldname }))
+  );
+
   const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
+
   const result = await userService.updateMyProfile(
     req.user?.id,
     fromData,
-    file,
+    filesWithField,
   );
+
   sendResponse(res, {
     statusCode: 200,
     success: true,
