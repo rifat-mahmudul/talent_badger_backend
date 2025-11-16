@@ -117,45 +117,31 @@ const getMyProfile = async (id: string) => {
 const updateMyProfile = async (
   id: string,
   payload: IUser,
-  files?: { [key: string]: Express.Multer.File[] },
+  files?: Express.Multer.File[],
 ) => {
-  // Upload Profile Image
-  if (files?.profileImage?.length) {
-    const uploadProfile = await fileUploader.uploadToCloudinary(
-      files.profileImage[0],
+  if (files?.length) {
+    const uploadResults = await Promise.all(
+      files.map((file) => fileUploader.uploadToCloudinary(file)),
     );
 
-    if (!uploadProfile.secure_url) {
-      throw new AppError(400, 'Failed to upload profile image');
-    }
-    payload.profileImage = uploadProfile.secure_url;
+    const fileMap: Record<string, string> = {};
+    files.forEach((file, index) => {
+      if (uploadResults[index]) {
+        fileMap[file.fieldname] = uploadResults[index].secure_url;
+      }
+    });
+
+    if (fileMap.profileImage) payload.profileImage = fileMap.profileImage;
+    if (fileMap.cv) payload.cv = fileMap.cv;
+    if (fileMap.certifications) payload.certifications = fileMap.certifications;
   }
 
-  // Upload CV
-  if (files?.cv?.length) {
-    const uploadCv = await fileUploader.uploadToCloudinary(files.cv[0]);
-
-    if (!uploadCv.secure_url) {
-      throw new AppError(400, 'Failed to upload CV');
-    }
-    payload.cv = uploadCv.secure_url;
-  }
-
-  // Upload Certifications
-  if (files?.certifications?.length) {
-    const uploadCert = await fileUploader.uploadToCloudinary(
-      files.certifications[0],
-    );
-
-    if (!uploadCert.secure_url) {
-      throw new AppError(400, 'Failed to upload certifications');
-    }
-    payload.certifications = uploadCert.secure_url;
-  }
   const result = await User.findByIdAndUpdate(id, payload, { new: true });
+
   if (!result) {
     throw new AppError(404, 'User not found');
   }
+
   return result;
 };
 

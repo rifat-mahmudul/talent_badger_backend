@@ -88,16 +88,23 @@ const getMyProfile = catchAsync(async (req, res) => {
 });
 
 const updateMyProfile = catchAsync(async (req, res) => {
-  const file = req.files as {
-    [fieldname: string]: Express.Multer.File[];
-  };
+  const filesObj = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const filesWithField = Object.keys(filesObj).flatMap((fieldname) =>
+    filesObj[fieldname].map((file) => ({ ...file, fieldname }))
+  );
+
   const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
+<<<<<<< HEAD
   console.log(fromData)
+=======
+
+>>>>>>> 06510bab8c727153a9011a52d4b2993d03a71c82
   const result = await userService.updateMyProfile(
     req.user?.id,
     fromData,
-    file,
+    filesWithField,
   );
+
   sendResponse(res, {
     statusCode: 200,
     success: true,

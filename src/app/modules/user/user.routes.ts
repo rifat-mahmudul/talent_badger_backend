@@ -31,18 +31,18 @@ router.get(
 router.put(
   '/update-my-profile',
   auth(userRole.User, userRole.Engineer, userRole.Admin),
-  fileUploader.upload.single('profileImage'),
+  fileUploader.upload.fields([
+    { name: 'profileImage', maxCount: 1 },
+    { name: 'cv', maxCount: 1 },
+    { name: 'certifications', maxCount: 1 },
+  ]),
   userController.updateMyProfile,
 );
 
 router.put(
   '/:id',
   auth(userRole.Admin),
-  fileUploader.upload.fields([
-    { name: 'profileImage', maxCount: 1 },
-    { name: 'cv', maxCount: 1 },
-    { name: 'certifications', maxCount: 1 },
-  ]),
+  fileUploader.upload.single('profileImage'),
   userController.updateUserById,
 );
 
