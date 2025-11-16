@@ -1,3 +1,4 @@
+import { file } from 'zod';
 import config from '../../config';
 import AppError from '../../error/appError';
 import { fileUploader } from '../../helper/fileUploder';
@@ -116,14 +117,40 @@ const getMyProfile = async (id: string) => {
 const updateMyProfile = async (
   id: string,
   payload: IUser,
-  file?: Express.Multer.File,
+  files?: { [key: string]: Express.Multer.File[] },
 ) => {
-  if (file) {
-    const uploadProfile = await fileUploader.uploadToCloudinary(file);
-    if (!uploadProfile?.secure_url) {
+  // Upload Profile Image
+  if (files?.profileImage?.length) {
+    const uploadProfile = await fileUploader.uploadToCloudinary(
+      files.profileImage[0],
+    );
+
+    if (!uploadProfile.secure_url) {
       throw new AppError(400, 'Failed to upload profile image');
     }
     payload.profileImage = uploadProfile.secure_url;
+  }
+
+  // Upload CV
+  if (files?.cv?.length) {
+    const uploadCv = await fileUploader.uploadToCloudinary(files.cv[0]);
+
+    if (!uploadCv.secure_url) {
+      throw new AppError(400, 'Failed to upload CV');
+    }
+    payload.cv = uploadCv.secure_url;
+  }
+
+  // Upload Certifications
+  if (files?.certifications?.length) {
+    const uploadCert = await fileUploader.uploadToCloudinary(
+      files.certifications[0],
+    );
+
+    if (!uploadCert.secure_url) {
+      throw new AppError(400, 'Failed to upload certifications');
+    }
+    payload.certifications = uploadCert.secure_url;
   }
   const result = await User.findByIdAndUpdate(id, payload, { new: true });
   if (!result) {
