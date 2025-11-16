@@ -88,7 +88,9 @@ const getMyProfile = catchAsync(async (req, res) => {
 });
 
 const updateMyProfile = catchAsync(async (req, res) => {
-  const file = req.file as Express.Multer.File;
+  const file = req.files as {
+    [fieldname: string]: Express.Multer.File[];
+  };
   const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
   console.log(fromData)
   const result = await userService.updateMyProfile(
@@ -105,7 +107,7 @@ const updateMyProfile = catchAsync(async (req, res) => {
 });
 
 const createEngineerStripeAccount = catchAsync(async (req, res) => {
-  console.log(req.user?.id)
+  console.log(req.user?.id);
   const result = await userService.createEngineerStripeAccount(req.user?.id);
   sendResponse(res, {
     statusCode: 200,
