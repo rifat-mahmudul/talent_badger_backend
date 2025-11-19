@@ -8,9 +8,6 @@ import { newsletterRouter } from '../modules/newsletter/newsletter.routes';
 import { projectRouter } from '../modules/project/project.route';
 import { contactRouter } from '../modules/contact/contact.routes';
 import { reviewRouter } from '../modules/review/review.routes';
-import { bookingRouter } from '../modules/booking/booking.routes';
-import { dashboardRouter } from '../modules/dashboard/dashboard.routes';
-import { faqRouter } from '../modules/faq/faq.routes';
 
 const router = Router();
 
@@ -51,18 +48,7 @@ const moduleRoutes = [
     path: '/review',
     route: reviewRouter,
   },
-  {
-    path: '/booking',
-    route: bookingRouter,
-  },
-  {
-    path: '/dashboard',
-    route: dashboardRouter,
-  },
-  {
-    path: '/faq',
-    route: faqRouter,
-  },
+  
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

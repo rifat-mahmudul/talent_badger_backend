@@ -45,4 +45,5 @@ export interface IUser {
   avgRating?: number;
   badge?: string;
   level?: number;
+  ismanager?: boolean;
 }

@@ -103,6 +103,7 @@ const getMyAllProjects = async (
   const projects = await Project.find(queryCondition)
     .populate('client', 'firstName lastName email profileImage')
     .populate('engineers', 'firstName lastName email profileImage')
+    .populate('approvedEngineers', 'firstName lastName email profileImage')
     .skip(skip)
     .limit(limit)
     .sort({ [sortBy]: sortOrder } as any);
@@ -119,7 +120,10 @@ const getMyAllProjects = async (
 
 // Engineer Approve Project
 const approveProject = async (projectId: string, engineerId: string) => {
-  const project = await Project.findById(projectId);
+  const project = await Project.findById(projectId).populate(
+    'engineers',
+    'firstName lastName email profileImage',
+  );
   if (!project) throw new AppError(404, 'Project not found');
 
   const engineer = await User.findById(engineerId);
@@ -148,7 +152,10 @@ const approveProject = async (projectId: string, engineerId: string) => {
 };
 
 const rejectProject = async (projectId: string, engineerId: string) => {
-  const project = await Project.findById(projectId);
+  const project = await Project.findById(projectId).populate(
+    'engineers',
+    'firstName lastName email profileImage',
+  );
   if (!project) throw new AppError(404, 'Project not found');
 
   const engineer = await User.findById(engineerId);
@@ -254,11 +261,43 @@ const deleteProject = async (projectId: string, userId: string) => {
 const singleProject = async (projectId: string) => {
   const project = await Project.findById(projectId)
     .populate('client', 'firstName lastName email profileImage')
-    .populate('engineers', 'firstName lastName email profileImage');
+    .populate('engineers', 'firstName lastName email profileImage')
+    .populate('approvedEngineers', 'firstName lastName email profileImage');
 
   if (!project) throw new AppError(404, 'Project not found');
 
   return project;
+};
+
+const assasintManager = async (
+  userId: string,
+  projectId: string,
+  engineerId: string,
+) => {
+  const user = await User.findById(userId);
+  if (!user) throw new AppError(404, 'User not found');
+  if (user.role !== 'user')
+    throw new AppError(403, 'Only clients can assign engineers');
+
+  const project = await Project.findById(projectId);
+  if (!project) throw new AppError(404, 'Project not found');
+
+  if (project.client.toString() !== userId)
+    throw new AppError(403, 'Only the client can assign engineers');
+
+  if (!project?.approvedEngineers?.some((id) => id.toString() === engineerId))
+    throw new AppError(400, 'Engineer not assigned to this your project');
+
+  const engineer = await User.findById(engineerId).select(
+    'ismanager email role experience skills expertise location level badge profileImage firstName lastName',
+  );
+  if (!engineer || engineer.role !== 'engineer')
+    throw new AppError(404, 'Engineer not found');
+
+  engineer.ismanager = true;
+  await engineer.save();
+
+  return engineer;
 };
 
 export const projectService = {
@@ -270,4 +309,5 @@ export const projectService = {
   updateMyProject,
   deleteProject,
   singleProject,
+  assasintManager,
 };

@@ -25,7 +25,7 @@ const userSchema = new mongoose.Schema<IUser>(
     // Engineer info
     professionTitle: { type: String },
     bio: { type: String },
-    rate: { type: Number },
+    rate: { type: Number, default: 0 },
     experience: { type: Number },
     skills: [{ type: String }],
     expertise: [{ type: String }],
@@ -58,6 +58,7 @@ const userSchema = new mongoose.Schema<IUser>(
     avgRating: { type: Number, default: 0 },
     badge: [{ type: String, default: 'none' }],
     level: { type: Number, default: 0 },
+    ismanager: { type: Boolean, default: false },
   },
   {
     timestamps: true,

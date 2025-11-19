@@ -140,6 +140,26 @@ const singleProject = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const assasintManager = catchAsync(async (req: Request, res: Response) => {
+  const { projectId } = req.params;
+  const userId = req.user.id;
+  const { engineerId } = req.body;
+
+
+  const project = await projectService.assasintManager(
+    userId,
+    projectId,
+    engineerId,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Manager assigned successfully',
+    data: project,
+  });
+});
+
 export const projectController = {
   createProject,
   approveProject,
@@ -149,4 +169,5 @@ export const projectController = {
   updateMyProject,
   deleteProject,
   singleProject,
+  assasintManager,
 };
