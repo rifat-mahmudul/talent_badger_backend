@@ -93,8 +93,8 @@ const updateMyProfile = catchAsync(async (req, res) => {
     filesObj[fieldname].map((file) => ({ ...file, fieldname }))
   );
 
-  const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
 
+  const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
   const result = await userService.updateMyProfile(
     req.user?.id,
     fromData,

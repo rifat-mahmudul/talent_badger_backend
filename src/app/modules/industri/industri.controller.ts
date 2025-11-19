@@ -5,7 +5,8 @@ import { industrieService } from './industri.service';
 
 const createIndustry = catchAsync(async (req, res) => {
   const userId = req.user?.id;
-  const result = await industrieService.createIndustry(userId, req.body);
+  const file = req.file;
+  const result = await industrieService.createIndustry(userId, req.body, file);
 
   sendResponse(res, {
     statusCode: 200,
@@ -50,7 +51,9 @@ const singleIndustry = catchAsync(async (req, res) => {
 
 const updateIndustry = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const result = await industrieService.updateIndustry(id, req.body);
+  const file = req.file; 
+  const fromdata = req.body.data ? JSON.parse(req.body.data) : req.body;
+  const result = await industrieService.updateIndustry(id, fromdata, file);
 
   sendResponse(res, {
     statusCode: 200,

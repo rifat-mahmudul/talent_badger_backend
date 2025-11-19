@@ -20,6 +20,7 @@ export interface IUser {
   certifications?: string;
   cv?: string;
   ndaagreeement?: string;
+  gitHubLink?: string;
 
   companyName?: string;
   industry?: Types.ObjectId;

@@ -16,6 +16,10 @@ const industrySchema = new mongoose.Schema<IIndustry>(
     discription: {
       type: String,
     },
+    image: {
+      type: String,
+      required: true,
+    },
     createBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

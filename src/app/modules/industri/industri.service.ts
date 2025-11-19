@@ -1,10 +1,15 @@
 import AppError from '../../error/appError';
+import { fileUploader } from '../../helper/fileUploder';
 import pagination, { IOption } from '../../helper/pagenation';
 import User from '../user/user.model';
 import { IIndustry } from './industri.interface';
 import Industry from './industri.model';
 
-const createIndustry = async (userId: string, payload: IIndustry) => {
+const createIndustry = async (userId: string, payload: IIndustry, file?: Express.Multer.File) => {
+  if (file) {
+    const filuploadBlog = await fileUploader.uploadToCloudinary(file);
+    payload.image = filuploadBlog?.secure_url;
+  }
   const user = await User.findById(userId);
   if (!user) throw new AppError(404, 'User not found');
   if (user.role !== 'admin') throw new AppError(400, 'You are not authorized');
@@ -64,7 +69,11 @@ const singleIndustry = async (id: string) => {
   return result;
 };
 
-const updateIndustry = async (id: string, payload: Partial<IIndustry>) => {
+const updateIndustry = async (id: string, payload: Partial<IIndustry>, file?: Express.Multer.File) => {
+  if (file) {
+    const fileUploadeIndustry = await fileUploader.uploadToCloudinary(file);
+    payload.image = fileUploadeIndustry?.secure_url;
+  }
   const result = await Industry.findByIdAndUpdate(id, payload, { new: true });
   if (!result) throw new AppError(404, 'Industry not found');
   return result;

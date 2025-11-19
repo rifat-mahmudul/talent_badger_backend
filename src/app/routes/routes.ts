@@ -8,7 +8,6 @@ import { newsletterRouter } from '../modules/newsletter/newsletter.routes';
 import { projectRouter } from '../modules/project/project.route';
 import { contactRouter } from '../modules/contact/contact.routes';
 import { reviewRouter } from '../modules/review/review.routes';
-import { assignHourRouter } from '../modules/assignHours/assignHours.routes';
 
 const router = Router();
 
@@ -49,10 +48,7 @@ const moduleRoutes = [
     path: '/review',
     route: reviewRouter,
   },
-  {
-    path: '/assignHour',
-    route: assignHourRouter,
-  },
+  
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

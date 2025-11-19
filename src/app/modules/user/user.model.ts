@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema<IUser>(
     certifications: { type: String },
     cv: { type: String },
     ndaagreeement: { type: String },
+    gitHubLink: { type: String },
 
     // Company info
     companyName: { type: String },

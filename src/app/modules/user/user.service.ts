@@ -1,4 +1,3 @@
-import { file } from 'zod';
 import config from '../../config';
 import AppError from '../../error/appError';
 import { fileUploader } from '../../helper/fileUploder';

@@ -61,6 +61,7 @@ const forgotPassword = catchAsync(async (req, res) => {
 
 const verifyEmailOTP = catchAsync(async (req, res) => {
   const { email, otp } = req.body;
+  console.log(email, otp);
   const result = await authService.verifyEmailOTP(email, otp);
 
   sendResponse(res, {
