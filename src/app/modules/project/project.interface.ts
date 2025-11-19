@@ -15,4 +15,5 @@ export interface IProject extends Document {
   approvedEngineers?: Types.ObjectId[];
   rejectedEngineers?: Types.ObjectId[];
   startDate?: Date;
+  usedAmount?:number
 }
