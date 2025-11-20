@@ -10,6 +10,7 @@ import { contactRouter } from '../modules/contact/contact.routes';
 import { reviewRouter } from '../modules/review/review.routes';
 import { dashboardRouter } from '../modules/dashboard/dashboard.routes';
 import { bookingRouter } from '../modules/booking/booking.routes';
+import { badgeRouter } from '../modules/badge/badge.routes';
 
 const router = Router();
 
@@ -57,6 +58,10 @@ const moduleRoutes = [
   {
     path: '/booking',
     route: bookingRouter,
+  },
+  {
+    path: '/badge',
+    route: badgeRouter,
   },
 ];
 
