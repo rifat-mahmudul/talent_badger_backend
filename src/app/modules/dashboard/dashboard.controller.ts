@@ -12,6 +12,17 @@ const dashboardOverView = catchAsync(async (req, res) => {
   });
 });
 
+const userDashboardOverview = catchAsync(async (req, res) => {
+  const result = await dashboardService.userDashboardOverview(req.user.id);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User dashboard overview',
+    data: result,
+  });
+});
+
 export const dashboardController = {
   dashboardOverView,
+  userDashboardOverview,
 };

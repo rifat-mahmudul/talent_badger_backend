@@ -17,6 +17,10 @@ const bookingSchema = new mongoose.Schema<IBooking>(
       type: Date,
       required: true,
     },
+    time: {
+      type: String,
+      required: true,
+    },
     link: {
       type: String,
       required: true,

@@ -75,6 +75,10 @@ const getMyProjects = catchAsync(async (req: Request, res: Response) => {
     'description',
     'status',
     'progress',
+    'upcoming',
+    'today',
+    'next7',
+    'expired',
   ]);
   const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
 
@@ -144,7 +148,6 @@ const assasintManager = catchAsync(async (req: Request, res: Response) => {
   const { projectId } = req.params;
   const userId = req.user.id;
   const { engineerId } = req.body;
-
 
   const project = await projectService.assasintManager(
     userId,
