@@ -17,7 +17,7 @@ router.post(
 // Client gets all projects engineer and user
 router.get(
   '/my',
-  auth(userRole.User, userRole.Engineer),
+  auth(userRole.User, userRole.Engineer, userRole.Admin),
   projectController.getMyProjects,
 );
 

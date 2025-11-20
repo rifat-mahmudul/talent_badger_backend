@@ -60,7 +60,7 @@ const getMyAllProjects = async (
   options: IOption,
 ) => {
   const user = await User.findById(userId);
-  if (!user) throw new AppError(404, "User not found");
+  if (!user) throw new AppError(404, 'User not found');
 
   const { page, limit, skip, sortBy, sortOrder } = pagination(options);
 
@@ -68,13 +68,13 @@ const getMyAllProjects = async (
 
   const andCondition: any[] = [];
 
-  const searchableFields = ["title", "description", "status"];
+  const searchableFields = ['title', 'description', 'status'];
 
   // Search by term
   if (searchTerm) {
     andCondition.push({
       $or: searchableFields.map((field) => ({
-        [field]: { $regex: searchTerm, $options: "i" },
+        [field]: { $regex: searchTerm, $options: 'i' },
       })),
     });
   }
@@ -99,14 +99,14 @@ const getMyAllProjects = async (
   next7Days.setDate(next7Days.getDate() + 7);
 
   // Upcoming (deliveryDate future)
-  if (upcoming === "true") {
+  if (upcoming === 'true') {
     andCondition.push({
       deliveryDate: { $gte: new Date() },
     });
   }
 
   // Today Deadline
-  if (today === "true") {
+  if (today === 'true') {
     andCondition.push({
       deliveryDate: {
         $gte: todayStart,
@@ -116,7 +116,7 @@ const getMyAllProjects = async (
   }
 
   // Next 7 Days
-  if (next7 === "true") {
+  if (next7 === 'true') {
     andCondition.push({
       deliveryDate: {
         $gte: new Date(),
@@ -126,7 +126,7 @@ const getMyAllProjects = async (
   }
 
   // Expired Deadline (deliveryDate < now)
-  if (expired === "true") {
+  if (expired === 'true') {
     andCondition.push({
       deliveryDate: { $lt: new Date() },
     });
@@ -134,26 +134,27 @@ const getMyAllProjects = async (
 
   // ================================
 
-  const whereCondition =
-    andCondition.length > 0 ? { $and: andCondition } : {};
+  const whereCondition = andCondition.length > 0 ? { $and: andCondition } : {};
 
   let queryCondition: any = {};
 
   // Role-based filters
-  if (user.role === "user") {
+  if (user.role === 'user') {
     queryCondition = { ...whereCondition, client: user._id };
-  } else if (user.role === "engineer") {
+  } else if (user.role === 'engineer') {
     queryCondition = { ...whereCondition, engineers: user._id };
+  } else if (user.role === 'admin') {
+    queryCondition = { ...whereCondition };
   } else {
-    throw new AppError(403, "Invalid user role");
+    throw new AppError(403, 'Invalid user role');
   }
 
   const total = await Project.countDocuments(queryCondition);
 
   const projects = await Project.find(queryCondition)
-    .populate("client", "firstName lastName email profileImage")
-    .populate("engineers", "firstName lastName email profileImage")
-    .populate("approvedEngineers", "firstName lastName email profileImage")
+    .populate('client', 'firstName lastName email profileImage')
+    .populate('engineers', 'firstName lastName email profileImage')
+    .populate('approvedEngineers', 'firstName lastName email profileImage')
     .skip(skip)
     .limit(limit)
     .sort({ [sortBy]: sortOrder } as any);
@@ -163,7 +164,6 @@ const getMyAllProjects = async (
     meta: { total, page, limit },
   };
 };
-
 
 // Engineer Approve Project
 const approveProject = async (projectId: string, engineerId: string) => {
