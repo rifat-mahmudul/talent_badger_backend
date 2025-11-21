@@ -11,6 +11,7 @@ import { reviewRouter } from '../modules/review/review.routes';
 import { dashboardRouter } from '../modules/dashboard/dashboard.routes';
 import { bookingRouter } from '../modules/booking/booking.routes';
 import { badgeRouter } from '../modules/badge/badge.routes';
+import { paymentRouter } from '../modules/payment/payment.routes';
 
 const router = Router();
 
@@ -62,6 +63,10 @@ const moduleRoutes = [
   {
     path: '/badge',
     route: badgeRouter,
+  },
+  {
+    path: '/payment',
+    route: paymentRouter,
   },
 ];
 

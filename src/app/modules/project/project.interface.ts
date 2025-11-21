@@ -1,6 +1,7 @@
-import { Document, Types } from 'mongoose';
+import { Types } from 'mongoose';
 
-export interface IProject extends Document {
+export interface IProject {
+  _id?: Types.ObjectId;
   title: string;
   description: string;
   client: Types.ObjectId;
@@ -15,5 +16,5 @@ export interface IProject extends Document {
   approvedEngineers?: Types.ObjectId[];
   rejectedEngineers?: Types.ObjectId[];
   startDate?: Date;
-  usedAmount?:number
+  usedAmount?: number;
 }
