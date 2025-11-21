@@ -12,6 +12,7 @@ import { dashboardRouter } from '../modules/dashboard/dashboard.routes';
 import { bookingRouter } from '../modules/booking/booking.routes';
 import { badgeRouter } from '../modules/badge/badge.routes';
 import { paymentRouter } from '../modules/payment/payment.routes';
+import { assignHourRouter } from '../modules/assignHours/assignHours.routes';
 
 const router = Router();
 
@@ -67,6 +68,10 @@ const moduleRoutes = [
   {
     path: '/payment',
     route: paymentRouter,
+  },
+  {
+    path: '/assignHour',
+    route: assignHourRouter,
   },
 ];
 

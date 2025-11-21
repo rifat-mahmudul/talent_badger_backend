@@ -19,6 +19,7 @@ export interface IPayment {
   clientId: mongoose.Types.ObjectId;
   stripeSessionId?: string;
   stripePaymentIntentId?: string;
+  transferGroup?: string;
   amount: number;
   adminFee: number;
   engineerFee: number;
@@ -35,7 +36,7 @@ const ApprovedEngineerSchema = new Schema<IApprovedEngineer>(
     rate: { type: Number, default: 0 },
     projectFee: { type: Number, default: 0 },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const TransferSchema = new Schema<ITransfer>(
@@ -45,7 +46,7 @@ const TransferSchema = new Schema<ITransfer>(
     transferId: { type: String, required: true },
     timestamp: { type: Date, default: Date.now },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const PaymentSchema = new Schema<IPayment>(
@@ -54,15 +55,22 @@ const PaymentSchema = new Schema<IPayment>(
     clientId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     stripeSessionId: { type: String, unique: true, sparse: true },
     stripePaymentIntentId: { type: String },
+
+    // ⭐ NEW FIELD ADDED HERE
+    transferGroup: { type: String, unique: true, sparse: true },
     amount: { type: Number, required: true },
     adminFee: { type: Number, default: 0 },
     engineerFee: { type: Number, default: 0 },
     approvedEngineers: { type: [ApprovedEngineerSchema], default: [] },
     transfers: { type: [TransferSchema], default: [] },
     currency: { type: String, default: 'usd' },
-    status: { type: String, enum: ['pending','paid','failed','distributed'], default: 'pending' },
+    status: {
+      type: String,
+      enum: ['pending', 'paid', 'failed', 'distributed'],
+      default: 'pending',
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model<IPayment>('Payment', PaymentSchema);
