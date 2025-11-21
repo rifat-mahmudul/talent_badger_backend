@@ -1,9 +1,6 @@
-
 import { Request, Response } from 'express';
-
 import sendResponse from '../../utils/sendResponse';
 import AppError from '../../error/appError';
-import Payment from './payment.model';
 import catchAsync from '../../utils/catchAsycn';
 import { paymentService } from './payment.service';
 
@@ -52,13 +49,7 @@ const getPaymentStatus = catchAsync(async (req, res) => {
     throw new AppError(400, 'Payment ID is required');
   }
 
-  const payment = await Payment.findById(paymentId)
-    .populate('projectId', 'title description')
-    .populate('clientId', 'email firstName lastName');
-
-  if (!payment) {
-    throw new AppError(404, 'Payment not found');
-  }
+  const payment = await paymentService.getPaymentById(paymentId);
 
   sendResponse(res, {
     statusCode: 200,
@@ -68,8 +59,27 @@ const getPaymentStatus = catchAsync(async (req, res) => {
   });
 });
 
+// Manual distribution endpoint
+const manualDistribution = catchAsync(async (req, res) => {
+  const { paymentId } = req.params;
+
+  if (!paymentId) {
+    throw new AppError(400, 'Payment ID is required');
+  }
+
+  const result = await paymentService.manuallyDistributeFunds(paymentId);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Funds distributed successfully',
+    data: result,
+  });
+});
+
 export const paymentController = {
   createCheckoutSession,
   handleWebhook,
   getPaymentStatus,
+  manualDistribution,
 };

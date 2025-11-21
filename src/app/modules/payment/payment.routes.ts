@@ -17,4 +17,11 @@ router.get(
   paymentController.getPaymentStatus,
 );
 
+// Add manual distribution route
+router.post(
+  '/:paymentId/distribute',
+  auth(userRole.Admin), // Only admin can manually distribute
+  paymentController.manualDistribution,
+);
+
 export const paymentRouter = router;
