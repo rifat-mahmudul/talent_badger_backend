@@ -53,8 +53,7 @@ const userSchema = new mongoose.Schema<IUser>(
     balance: { type: Number, default: 0 },
     totalEarned: { type: Number, default: 0 },
     completedProjectsCount: { type: Number, default: 0 },
-    totalRating: { type: Number, default: 0 },
-    ratingCount: { type: Number, default: 0 },
+    level: { type: Number, default: 1 },
     avgRating: { type: Number, default: 0 },
     badge: { type: mongoose.Schema.Types.ObjectId, ref: 'Badge' },
 

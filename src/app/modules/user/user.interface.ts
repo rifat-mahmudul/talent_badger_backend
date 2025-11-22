@@ -39,13 +39,11 @@ export interface IUser {
   walletBalance?: number; // for clients
   balance?: number; // engineer pending payout
   totalEarned?: number;
-  completedProjectsCount?: number;
-  totalRating?: number;
-  ratingCount?: number;
+  // ✅ Level and Progress fields যোগ করুন
+  completedProjectsCount?: number; // ✅ এই ফিল্ড যোগ করুন
+  level?: number; // ✅ লেভেল ফিল্ড যোগ করুন
   avgRating?: number;
-  badge?: string;
-  level?: number;
   ismanager?: boolean;
   // badge
-  badges?: Types.ObjectId ;
+  badge?: Types.ObjectId;
 }
