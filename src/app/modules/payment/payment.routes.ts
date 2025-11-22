@@ -5,10 +5,12 @@ import { paymentController } from './payment.conroller';
 
 const router = express.Router();
 
-router.post(
-  '/',
-  auth(userRole.User),
-  paymentController.createCheckoutSession,
+router.post('/', auth(userRole.User), paymentController.createCheckoutSession);
+
+router.get(
+  '/history',
+  auth(userRole.User, userRole.Admin, userRole.Engineer),
+  paymentController.getPaymentHistory,
 );
 
 router.get(

@@ -3,6 +3,7 @@ import sendResponse from '../../utils/sendResponse';
 import AppError from '../../error/appError';
 import catchAsync from '../../utils/catchAsycn';
 import { paymentService } from './payment.service';
+import pick from '../../helper/pick';
 
 const createCheckoutSession = catchAsync(async (req, res) => {
   const { projectId } = req.body;
@@ -77,9 +78,36 @@ const manualDistribution = catchAsync(async (req, res) => {
   });
 });
 
+const getPaymentHistory = catchAsync(async (req, res) => {
+  const clientId = req.user.id;
+  const filters = pick(req.query, [
+    'searchTerm',
+    'currency',
+    'status',
+    'transferId',
+    'stripePaymentIntentId',
+  ]);
+  const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
+
+  const result = await paymentService.getPaymentHistory(
+    clientId,
+    filters,
+    options,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Payment history retrieved',
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
 export const paymentController = {
   createCheckoutSession,
   handleWebhook,
   getPaymentStatus,
   manualDistribution,
+  getPaymentHistory,
 };

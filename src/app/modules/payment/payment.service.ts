@@ -5,6 +5,8 @@ import Project from '../project/project.model';
 import User from '../user/user.model';
 import AppError from '../../error/appError';
 import AssignHour from '../assignHours/assignHours.model';
+import pagination, { IOption } from '../../helper/pagenation';
+import paymentModel from './payment.model';
 
 const stripe = new Stripe(config.stripe.secretKey!, {
   apiVersion: '2023-08-16',
@@ -328,10 +330,99 @@ const getPaymentById = async (paymentId: string) => {
   return payment;
 };
 
+const getPaymentHistory = async (
+  userId: string,
+  params: any,
+  options: IOption,
+) => {
+  const { page, limit, skip, sortBy, sortOrder } = pagination(options);
+  const { searchTerm, ...filterData } = params;
+
+  // Check user
+  const user = await User.findById(userId);
+  if (!user) throw new AppError(404, "User not found");
+
+  const andCondition: any[] = [];
+
+  // ============================================================
+  // 🔥 ROLE-BASED FILTER STARTS HERE
+  // ============================================================
+
+  if (user.role === "admin") {
+    // Admin sees ALL payments → no filter applied
+  } 
+  else if (user.role === "user") {
+    // User sees ONLY payments where he is the client
+    andCondition.push({
+      clientId: user._id,
+    });
+  } 
+  else if (user.role === "engineer") {
+    // Engineer sees payments assigned to him in approvedEngineers
+    andCondition.push({
+      "approvedEngineers.engineer": user._id,
+    });
+  }
+
+  // ============================================================
+  // 🔎 SEARCH SYSTEM
+  // ============================================================
+
+  const searchableFields = ["currency", "status", "transferId", "stripePaymentIntentId"];
+
+  if (searchTerm) {
+    andCondition.push({
+      $or: searchableFields.map((field) => ({
+        [field]: { $regex: searchTerm, $options: "i" },
+      })),
+    });
+  }
+
+  // ============================================================
+  // 🔍 FILTER BY QUERY PARAMS
+  // ============================================================
+
+  if (Object.keys(filterData).length) {
+    andCondition.push({
+      $and: Object.entries(filterData).map(([field, value]) => ({
+        [field]: value,
+      })),
+    });
+  }
+
+  const whereCondition = andCondition.length > 0 ? { $and: andCondition } : {};
+
+  // ============================================================
+  // 📌 FETCH DATA WITH PAGINATION + SORTING
+  // ============================================================
+
+  const result = await paymentModel
+    .find(whereCondition)
+    .populate("clientId", "firstName lastName email")
+    .populate("projectId", "title status")
+    .populate("approvedEngineers.engineer", "firstName lastName email")
+    .skip(skip)
+    .limit(limit)
+    .sort({ [sortBy]: sortOrder } as any);
+
+  const total = await paymentModel.countDocuments(whereCondition);
+
+  return {
+    data: result,
+    meta: {
+      total,
+      page,
+      limit,
+    },
+  };
+};
+
+
 export const paymentService = {
   createCheckoutSession,
   distributeFunds,
   handleWebhook,
   manuallyDistributeFunds,
   getPaymentById,
+  getPaymentHistory
 };
