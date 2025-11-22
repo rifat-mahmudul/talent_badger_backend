@@ -4,8 +4,10 @@ import sendResponse from '../../utils/sendResponse';
 import { serviceServices } from './service.service';
 
 const createService = catchAsync(async (req, res) => {
+  const file = req.file as Express.Multer.File;
   const user = req.user?.id;
-  const result = await serviceServices.createService(user, req.body);
+  const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
+  const result = await serviceServices.createService(user, fromData, file);
   sendResponse(res, {
     statusCode: 201,
     success: true,
@@ -18,7 +20,6 @@ const getAllServices = catchAsync(async (req, res) => {
   const filters = pick(req.query, [
     'searchTerm',
     'serviceName',
-    'category',
     'description',
     'status',
   ]);
@@ -45,8 +46,10 @@ const getSingleService = catchAsync(async (req, res) => {
 });
 
 const updateService = catchAsync(async (req, res) => {
+  const file = req.file as Express.Multer.File;
   const { id } = req.params;
-  const result = await serviceServices.updateService(id, req.body);
+  const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
+  const result = await serviceServices.updateService(id, fromData, file);
   sendResponse(res, {
     statusCode: 200,
     success: true,

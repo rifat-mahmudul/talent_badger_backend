@@ -8,9 +8,8 @@ const serviceSchema = new mongoose.Schema<IService>(
       required: true,
       unique: true,
     },
-    category: {
+    image: {
       type: String,
-      required: true,
     },
     status: {
       type: String,

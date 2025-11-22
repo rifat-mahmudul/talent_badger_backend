@@ -1,9 +1,24 @@
 import Booking from '../booking/booking.model';
+import paymentModel from '../payment/payment.model';
 import Project from '../project/project.model';
 import User from '../user/user.model';
 
 const dashboardOverView = async () => {
-  const totalErning = '';
+  const totalErningAdmin = await paymentModel.aggregate([
+    {
+      $match: { status: { $in: ['paid', 'distributed'] } },
+    },
+    {
+      $group: {
+        _id: null,
+        totalAdminFee: { $sum: '$adminFee' },
+      },
+    },
+  ]);
+
+  const totalEarning = totalErningAdmin.length
+    ? totalErningAdmin[0].totalAdminFee
+    : 0;
   const totaActivelUser = await User.countDocuments({ status: 'active' });
   const totalActiveProject = await Project.countDocuments({
     status: 'in_progress',
@@ -17,7 +32,7 @@ const dashboardOverView = async () => {
   });
 
   return {
-    totalErning,
+    totalEarning,
     totaActivelUser,
     totalActiveProject,
     totalPandingProject,
