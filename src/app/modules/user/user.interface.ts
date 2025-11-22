@@ -36,14 +36,13 @@ export interface IUser {
   stripeAccountId?: string;
 
   // financial + badges
-  walletBalance?: number; // for clients
-  balance?: number; // engineer pending payout
+  walletBalance?: number;
+  balance?: number;
   totalEarned?: number;
-  // ✅ Level and Progress fields যোগ করুন
-  completedProjectsCount?: number; // ✅ এই ফিল্ড যোগ করুন
-  level?: number; // ✅ লেভেল ফিল্ড যোগ করুন
+  completedProjectsCount?: number;
+  level?: number;
   avgRating?: number;
   ismanager?: boolean;
-  // badge
   badge?: Types.ObjectId;
+  lavelUpdateRequest?: boolean;
 }

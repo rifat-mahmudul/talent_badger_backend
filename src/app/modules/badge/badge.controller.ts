@@ -64,10 +64,24 @@ const deleteBadge = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+const lavelUpdateRequest = catchAsync(async (req, res) => {
+  const userId = req.user.id;
+  const result = await badgeService.requestBadgeLavel(userId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Badge lavel request successfully',
+    data: result,
+  });
+});
+
+
 export const badgeController = {
   createBadge,
   getAllBadges,
   getSingleBadge,
   updateBadge,
   deleteBadge,
+  lavelUpdateRequest,
 };
