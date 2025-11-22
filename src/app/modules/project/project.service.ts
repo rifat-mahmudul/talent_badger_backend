@@ -153,8 +153,14 @@ const getMyAllProjects = async (
 
   const projects = await Project.find(queryCondition)
     .populate('client', 'firstName lastName email profileImage')
-    .populate('engineers', 'firstName lastName email profileImage')
-    .populate('approvedEngineers', 'firstName lastName email profileImage')
+    .populate(
+      'engineers',
+      'firstName lastName email profileImage professionTitle',
+    )
+    .populate(
+      'approvedEngineers',
+      'firstName lastName email profileImage professionTitle ismanager',
+    )
     .skip(skip)
     .limit(limit)
     .sort({ [sortBy]: sortOrder } as any);
@@ -309,7 +315,10 @@ const singleProject = async (projectId: string) => {
   const project = await Project.findById(projectId)
     .populate('client', 'firstName lastName email profileImage')
     .populate('engineers', 'firstName lastName email profileImage')
-    .populate('approvedEngineers', 'firstName lastName email profileImage');
+    .populate(
+      'approvedEngineers',
+      'firstName lastName email profileImage professionTitle ismanager',
+    );
 
   if (!project) throw new AppError(404, 'Project not found');
 
