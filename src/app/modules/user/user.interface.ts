@@ -47,5 +47,5 @@ export interface IUser {
   level?: number;
   ismanager?: boolean;
   // badge
-  badges?: Types.ObjectId;
+  badges?: Types.ObjectId ;
 }

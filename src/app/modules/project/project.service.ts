@@ -6,6 +6,7 @@ import Project from './project.model';
 import { Types } from 'mongoose';
 import pagination, { IOption } from '../../helper/pagenation';
 import sendMailer from '../../helper/sendMailer';
+import Booking from '../booking/booking.model';
 
 // Create Project
 const createProject = async (
@@ -320,9 +321,11 @@ const singleProject = async (projectId: string) => {
       'firstName lastName email profileImage professionTitle ismanager',
     );
 
+  const booking = await Booking.findOne({ projectId: projectId });
+
   if (!project) throw new AppError(404, 'Project not found');
 
-  return project;
+  return {project,booking};
 };
 
 const assasintManager = async (
