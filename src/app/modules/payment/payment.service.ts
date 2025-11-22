@@ -100,7 +100,7 @@ const updateEngineerLevelAndBadge = async (engineerId: string) => {
   const badgeData = await Badge.findOne({ lavel: newLevel });
 
   if (badgeData) {
-    engineer.badge = badgeData._id; // save badge reference
+    engineer.badge = badgeData._id.toString(); // save badge reference
   }
 
   await engineer.save();
@@ -252,7 +252,7 @@ const distributeFunds = async (paymentId: string) => {
   console.log('✅ Payment successfully updated and saved');
 
   for (const e of engineers) {
-    await updateEngineerLevelAndBadge(e.engineer);
+    await updateEngineerLevelAndBadge(e.engineer.toString());
   }
 
   console.log('🏆 Engineer level & badges updated successfully');
