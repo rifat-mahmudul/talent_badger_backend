@@ -7,6 +7,7 @@ import AppError from '../../error/appError';
 import AssignHour from '../assignHours/assignHours.model';
 import pagination, { IOption } from '../../helper/pagenation';
 import paymentModel from './payment.model';
+import Badge from '../badge/badge.model';
 
 const stripe = new Stripe(config.stripe.secretKey!, {
   apiVersion: '2023-08-16',
@@ -82,6 +83,27 @@ const createCheckoutSession = async (projectId: string, clientId: string) => {
   });
 
   return { sessionId: session.id, url: session.url, paymentId: payment._id };
+};
+
+const updateEngineerLevelAndBadge = async (engineerId: string) => {
+  const engineer = await User.findById(engineerId);
+
+  if (!engineer) return;
+
+  // ⚡ Increase level based on completed projects
+  const completedProjects = engineer.completedProjectsCount || 0;
+  const newLevel = Math.floor(completedProjects / 3) + 1; // প্রতি 3 project level increase
+
+  engineer.level = newLevel;
+
+  // ⚡ Find badge for this level
+  const badgeData = await Badge.findOne({ lavel: newLevel });
+
+  if (badgeData) {
+    engineer.badge = badgeData._id.toString(); // save badge reference
+  }
+
+  await engineer.save();
 };
 
 // ✅ Distribute Funds (Fixed amount calculation)
@@ -229,6 +251,12 @@ const distributeFunds = async (paymentId: string) => {
   await payment.save();
   console.log('✅ Payment successfully updated and saved');
 
+  for (const e of engineers) {
+    await updateEngineerLevelAndBadge(e.engineer.toString());
+  }
+
+  console.log('🏆 Engineer level & badges updated successfully');
+
   return {
     totalAmount: payment.amount,
     adminFee: adminFeeInDollars,
@@ -340,47 +368,35 @@ const getPaymentHistory = async (
 
   // Check user
   const user = await User.findById(userId);
-  if (!user) throw new AppError(404, "User not found");
+  if (!user) throw new AppError(404, 'User not found');
 
   const andCondition: any[] = [];
 
-  // ============================================================
-  // 🔥 ROLE-BASED FILTER STARTS HERE
-  // ============================================================
-
-  if (user.role === "admin") {
+  if (user.role === 'admin') {
     // Admin sees ALL payments → no filter applied
-  } 
-  else if (user.role === "user") {
-    // User sees ONLY payments where he is the client
+  } else if (user.role === 'user') {
     andCondition.push({
       clientId: user._id,
     });
-  } 
-  else if (user.role === "engineer") {
-    // Engineer sees payments assigned to him in approvedEngineers
+  } else if (user.role === 'engineer') {
     andCondition.push({
-      "approvedEngineers.engineer": user._id,
+      'approvedEngineers.engineer': user._id,
     });
   }
-
-  // ============================================================
-  // 🔎 SEARCH SYSTEM
-  // ============================================================
-
-  const searchableFields = ["currency", "status", "transferId", "stripePaymentIntentId"];
+  const searchableFields = [
+    'currency',
+    'status',
+    'transferId',
+    'stripePaymentIntentId',
+  ];
 
   if (searchTerm) {
     andCondition.push({
       $or: searchableFields.map((field) => ({
-        [field]: { $regex: searchTerm, $options: "i" },
+        [field]: { $regex: searchTerm, $options: 'i' },
       })),
     });
   }
-
-  // ============================================================
-  // 🔍 FILTER BY QUERY PARAMS
-  // ============================================================
 
   if (Object.keys(filterData).length) {
     andCondition.push({
@@ -392,15 +408,11 @@ const getPaymentHistory = async (
 
   const whereCondition = andCondition.length > 0 ? { $and: andCondition } : {};
 
-  // ============================================================
-  // 📌 FETCH DATA WITH PAGINATION + SORTING
-  // ============================================================
-
   const result = await paymentModel
     .find(whereCondition)
-    .populate("clientId", "firstName lastName email")
-    .populate("projectId", "title status")
-    .populate("approvedEngineers.engineer", "firstName lastName email")
+    .populate('clientId', 'firstName lastName email')
+    .populate('projectId', 'title status')
+    .populate('approvedEngineers.engineer', 'firstName lastName email')
     .skip(skip)
     .limit(limit)
     .sort({ [sortBy]: sortOrder } as any);
@@ -417,12 +429,11 @@ const getPaymentHistory = async (
   };
 };
 
-
 export const paymentService = {
   createCheckoutSession,
   distributeFunds,
   handleWebhook,
   manuallyDistributeFunds,
   getPaymentById,
-  getPaymentHistory
+  getPaymentHistory,
 };

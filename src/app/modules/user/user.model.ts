@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import { IUser } from './user.interface';
 import bcrypt from 'bcryptjs';
 
@@ -56,8 +56,8 @@ const userSchema = new mongoose.Schema<IUser>(
     totalRating: { type: Number, default: 0 },
     ratingCount: { type: Number, default: 0 },
     avgRating: { type: Number, default: 0 },
-    // badge: { type: Types.ObjectId, ref: 'Badge' },
-    level: { type: Number, default: 0 },
+    badge: { type: Types.ObjectId, ref: 'Badge' },
+
     ismanager: { type: Boolean, default: false },
   },
   {
