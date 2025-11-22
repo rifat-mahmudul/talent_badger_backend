@@ -69,7 +69,7 @@ const registerUser = async (payload: Partial<IUser>) => {
 };
 
 const loginUser = async (payload: Partial<IUser>) => {
-  const user = await User.findOne({ email: payload.email });
+  const user = await User.findOne({ email: payload.email, status: 'active' });
   if (!user) throw new AppError(401, 'User not found');
   if (!payload.password) throw new AppError(400, 'Password is required');
 
