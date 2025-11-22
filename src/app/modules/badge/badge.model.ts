@@ -3,7 +3,7 @@ import { IBadge } from './badge.interface';
 
 const badgeSchema = new mongoose.Schema<IBadge>(
   {
-    lavel: { type: Number, required: true },
+    lavel: { type: Number, required: true, unique: true },
     badge: { type: [String], required: true },
   },
   { timestamps: true },
