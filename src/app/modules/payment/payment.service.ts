@@ -7,13 +7,37 @@ import AppError from '../../error/appError';
 import AssignHour from '../assignHours/assignHours.model';
 import pagination, { IOption } from '../../helper/pagenation';
 import paymentModel from './payment.model';
-import Badge from '../badge/badge.model';
 
 const stripe = new Stripe(config.stripe.secretKey!, {
   apiVersion: '2023-08-16',
 } as any);
 
-// ✅ Create Checkout Session
+const updateEngineerCompletedProjects = async (engineerId: string) => {
+  console.log(`📊 Incrementing project count for engineer: ${engineerId}`);
+
+  try {
+    const result = await User.findByIdAndUpdate(
+      engineerId,
+      {
+        $inc: { completedProjectsCount: 1 }, // ✅ সরাসরি ১ করে বাড়ান
+      },
+      { new: true },
+    );
+
+    if (!result) {
+      console.warn(`⚠️ Engineer not found: ${engineerId}`);
+      return;
+    }
+
+    console.log(
+      `✅ Engineer ${engineerId} - Completed Projects: ${result.completedProjectsCount}`,
+    );
+  } catch (error: any) {
+    console.error(`❌ Error updating engineer ${engineerId}:`, error.message);
+  }
+};
+
+//Create Checkout Session
 const createCheckoutSession = async (projectId: string, clientId: string) => {
   const project = await Project.findById(projectId)
     .populate('client')
@@ -83,27 +107,6 @@ const createCheckoutSession = async (projectId: string, clientId: string) => {
   });
 
   return { sessionId: session.id, url: session.url, paymentId: payment._id };
-};
-
-const updateEngineerLevelAndBadge = async (engineerId: string) => {
-  const engineer = await User.findById(engineerId);
-
-  if (!engineer) return;
-
-  // ⚡ Increase level based on completed projects
-  const completedProjects = engineer.completedProjectsCount || 0;
-  const newLevel = Math.floor(completedProjects / 3) + 1; // প্রতি 3 project level increase
-
-  engineer.level = newLevel;
-
-  // ⚡ Find badge for this level
-  const badgeData = await Badge.findOne({ lavel: newLevel });
-
-  if (badgeData) {
-    engineer.badge = badgeData._id.toString(); // save badge reference
-  }
-
-  await engineer.save();
 };
 
 // ✅ Distribute Funds (Fixed amount calculation)
@@ -251,9 +254,22 @@ const distributeFunds = async (paymentId: string) => {
   await payment.save();
   console.log('✅ Payment successfully updated and saved');
 
+  // ✅ ইঞ্জিনিয়ারদের লেভেল এবং ব্যাজ আপডেট করুন
+  console.log('🏆 Starting engineer level and badge updates...');
   for (const e of engineers) {
-    await updateEngineerLevelAndBadge(e.engineer.toString());
+    try {
+      await updateEngineerCompletedProjects(e.engineer as any);
+      console.log(`✅ Updated level/badge for engineer: ${e.engineer}`);
+    } catch (error: any) {
+      console.error(
+        `❌ Failed to update engineer ${e.engineer}:`,
+        error.message,
+      );
+      // Continue with other engineers even if one fails
+    }
   }
+
+  console.log('🏆 Engineer level & badges update process completed');
 
   console.log('🏆 Engineer level & badges updated successfully');
 
