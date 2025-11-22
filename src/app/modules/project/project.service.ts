@@ -321,7 +321,7 @@ const singleProject = async (projectId: string) => {
       'firstName lastName email profileImage professionTitle ismanager',
     );
 
-  const booking = await Booking.findOne({ projectId: projectId });
+  const booking = await Booking.find({ projectId: projectId });
 
   if (!project) throw new AppError(404, 'Project not found');
 
