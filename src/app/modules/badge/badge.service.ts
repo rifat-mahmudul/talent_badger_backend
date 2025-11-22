@@ -1,6 +1,7 @@
 import AppError from '../../error/appError';
 import { fileUploader } from '../../helper/fileUploder';
 import pagination, { IOption } from '../../helper/pagenation';
+import User from '../user/user.model';
 import { IBadge } from './badge.interface';
 import Badge from './badge.model';
 
@@ -90,13 +91,12 @@ const updateBadge = async (
       }),
     );
 
-    payload.badge = uploadedUrls; 
+    payload.badge = uploadedUrls;
   }
 
   const result = await Badge.findByIdAndUpdate(id, payload, { new: true });
   return result;
 };
-
 
 const deleteBadge = async (id: string) => {
   const badge = await Badge.findById(id);
@@ -107,10 +107,71 @@ const deleteBadge = async (id: string) => {
   return result;
 };
 
+const requestBadgeLavel = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+  if ((user?.completedProjectsCount as number) < 3) {
+    throw new AppError(400, 'You have not completed 3 projects yet');
+  }
+  user.lavelUpdateRequest = true;
+  await user.save();
+};
+
+const alllavelRequest = async (params: any, options: IOption) => {
+  const { page, limit, skip, sortBy, sortOrder } = pagination(options);
+  const { searchTerm, ...filterData } = params;
+
+  const andCondition: any[] = [];
+
+  if (searchTerm) {
+    const numberValue = Number(searchTerm);
+    if (!isNaN(numberValue)) {
+      andCondition.push({ lavel: numberValue });
+    }
+  }
+
+  if (Object.keys(filterData).length > 0) {
+    andCondition.push({
+      $and: Object.entries(filterData).map(([field, value]) => ({
+        [field]: value,
+      })),
+    });
+  }
+
+  const whereCondition = andCondition.length > 0 ? { $and: andCondition } : {};
+
+  const badges = await User.find({
+    ...whereCondition,
+    lavelUpdateRequest: true,
+  })
+    .sort({ [sortBy]: sortOrder } as any)
+    .skip(skip)
+    .limit(limit);
+
+  const total = await User.countDocuments({
+    ...whereCondition,
+    lavelUpdateRequest: true,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+    },
+    data: badges,
+  };
+};
+
+
 export const badgeService = {
   createBadge,
   getAllBadges,
   getSingleBadge,
   updateBadge,
   deleteBadge,
+  requestBadgeLavel,
+  alllavelRequest,
 };
