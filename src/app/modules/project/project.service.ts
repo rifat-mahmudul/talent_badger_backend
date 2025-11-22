@@ -3,7 +3,7 @@ import { IProject } from './project.interface';
 import AppError from '../../error/appError';
 import User from '../user/user.model';
 import Project from './project.model';
-import { Types } from 'mongoose';
+// import { Types } from 'mongoose';
 import pagination, { IOption } from '../../helper/pagenation';
 import sendMailer from '../../helper/sendMailer';
 import Booking from '../booking/booking.model';
@@ -173,11 +173,44 @@ const getMyAllProjects = async (
 };
 
 // Engineer Approve Project
+// const approveProject = async (projectId: string, engineerId: string) => {
+//   const project = await Project.findById(projectId).populate(
+//     'engineers',
+//     'firstName lastName email profileImage',
+//   );
+//   if (!project) throw new AppError(404, 'Project not found');
+
+//   const engineer = await User.findById(engineerId);
+//   if (!engineer || engineer.role !== 'engineer') {
+//     throw new AppError(404, 'Engineer not found or invalid role');
+//   }
+
+//   if (!project.engineers.some((id) => id.equals(engineer._id))) {
+//     throw new AppError(403, 'Engineer is not assigned to this project');
+//   }
+
+//   project.status = 'in_progress';
+//   project.lastUpdated = new Date();
+
+//   if (!project.approvedEngineers) project.approvedEngineers = [];
+//   if (
+//     !project.approvedEngineers.some((id: Types.ObjectId) =>
+//       id.equals(engineer._id),
+//     )
+//   ) {
+//     project.approvedEngineers.push(engineer._id);
+//   }
+
+//   await project.save();
+//   return project;
+// };
+
 const approveProject = async (projectId: string, engineerId: string) => {
   const project = await Project.findById(projectId).populate(
     'engineers',
-    'firstName lastName email profileImage',
+    'firstName lastName email profileImage rate',
   );
+
   if (!project) throw new AppError(404, 'Project not found');
 
   const engineer = await User.findById(engineerId);
@@ -185,31 +218,87 @@ const approveProject = async (projectId: string, engineerId: string) => {
     throw new AppError(404, 'Engineer not found or invalid role');
   }
 
-  if (!project.engineers.some((id) => id.equals(engineer._id))) {
+  // ✅ Safe check if engineer is assigned
+  const isAssigned = project.engineers.some(
+    (eng: any) => eng?._id?.equals(engineer._id),
+  );
+
+  if (!isAssigned) {
     throw new AppError(403, 'Engineer is not assigned to this project');
   }
 
-  project.status = 'in_progress';
-  project.lastUpdated = new Date();
-
+  // Ensure approvedEngineers exists
   if (!project.approvedEngineers) project.approvedEngineers = [];
-  if (
-    !project.approvedEngineers.some((id: Types.ObjectId) =>
-      id.equals(engineer._id),
-    )
-  ) {
+
+  // Engineer already approved?
+  const alreadyApproved = project.approvedEngineers.some((id: any) =>
+    id?.equals?.(engineer._id),
+  );
+
+  // Add to approval list if not already approved
+  if (!alreadyApproved) {
     project.approvedEngineers.push(engineer._id);
   }
 
+  // Count assigned & approved engineers
+  const totalAssigned = project.engineers.length;
+  const totalApproved = project.approvedEngineers.length;
+
+  // 🔥 Only set project to in_progress when ALL engineers approve
+  if (totalAssigned === totalApproved) {
+    project.status = 'in_progress';
+  }
+
+  project.lastUpdated = new Date();
   await project.save();
+
   return project;
 };
+
+
+// const rejectProject = async (projectId: string, engineerId: string) => {
+//   const project = await Project.findById(projectId).populate(
+//     'engineers',
+//     'firstName lastName email profileImage',
+//   );
+//   if (!project) throw new AppError(404, 'Project not found');
+
+//   const engineer = await User.findById(engineerId);
+//   if (!engineer || engineer.role !== 'engineer') {
+//     throw new AppError(404, 'Engineer not found or invalid role');
+//   }
+
+//   // Check if engineer is assigned
+//   if (!project.engineers.some((id) => id.equals(engineer._id))) {
+//     throw new AppError(403, 'Engineer is not assigned to this project');
+//   }
+
+//   // Remove engineer from assigned list
+//   project.engineers = project.engineers.filter(
+//     (id) => !id.equals(engineer._id),
+//   );
+
+//   // Optionally, track rejected engineers
+//   if (!project.rejectedEngineers) {
+//     project.rejectedEngineers = [];
+//   }
+//   project.rejectedEngineers.push(engineer._id);
+
+//   // If no engineers left, reset project status
+//   if (project.engineers.length === 0) {
+//     project.status = 'pending';
+//   }
+
+//   await project.save();
+//   return project;
+// };
 
 const rejectProject = async (projectId: string, engineerId: string) => {
   const project = await Project.findById(projectId).populate(
     'engineers',
     'firstName lastName email profileImage',
   );
+
   if (!project) throw new AppError(404, 'Project not found');
 
   const engineer = await User.findById(engineerId);
@@ -217,30 +306,38 @@ const rejectProject = async (projectId: string, engineerId: string) => {
     throw new AppError(404, 'Engineer not found or invalid role');
   }
 
-  // Check if engineer is assigned
-  if (!project.engineers.some((id) => id.equals(engineer._id))) {
+  // Must be assigned engineer
+  if (
+    !project.engineers.some((id: any) => id?._id?.equals(engineer._id))
+  ) {
     throw new AppError(403, 'Engineer is not assigned to this project');
   }
 
-  // Remove engineer from assigned list
+  // Remove from assigned engineers
   project.engineers = project.engineers.filter(
-    (id) => !id.equals(engineer._id),
+    (id: any) => !id?._id?.equals(engineer._id),
   );
 
-  // Optionally, track rejected engineers
-  if (!project.rejectedEngineers) {
-    project.rejectedEngineers = [];
-  }
+  // Remove from approved engineers safely
+  project.approvedEngineers =
+    project.approvedEngineers?.filter((eng: any) => {
+      if (!eng?.engineer) return true; // ensure safe
+      return !eng.engineer.equals(engineer._id);
+    }) || [];
+
+  // Track rejected engineers
+  if (!project.rejectedEngineers) project.rejectedEngineers = [];
   project.rejectedEngineers.push(engineer._id);
 
-  // If no engineers left, reset project status
-  if (project.engineers.length === 0) {
+  // If no engineers left -> back to pending
+  if (!project.engineers.length) {
     project.status = 'pending';
   }
 
   await project.save();
   return project;
 };
+
 
 // Update Progress (by engineer)
 const updateProgress = async (
@@ -325,7 +422,7 @@ const singleProject = async (projectId: string) => {
 
   if (!project) throw new AppError(404, 'Project not found');
 
-  return {project,booking};
+  return { project, booking };
 };
 
 const assasintManager = async (
