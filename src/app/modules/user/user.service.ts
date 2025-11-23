@@ -62,7 +62,8 @@ const getAllUser = async (params: any, options: IOption) => {
   const result = await User.find(whereCondition)
     .skip(skip)
     .limit(limit)
-    .sort({ [sortBy]: sortOrder } as any);
+    .sort({ [sortBy]: sortOrder } as any)
+    .populate('badge');
 
   const total = await User.countDocuments(whereCondition);
 
@@ -77,7 +78,7 @@ const getAllUser = async (params: any, options: IOption) => {
 };
 
 const getUserById = async (id: string) => {
-  const result = await User.findById(id);
+  const result = await User.findById(id).populate('badge');
   if (!result) {
     throw new AppError(404, 'User not found');
   }
