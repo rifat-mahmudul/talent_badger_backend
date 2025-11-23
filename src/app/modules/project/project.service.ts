@@ -28,6 +28,10 @@ const createProject = async (
     }
   }
 
+  if(!payload.engineers){
+    throw new AppError(404,"Empty Team Engineer")
+  }
+
   // Validate engineers
   if (payload.engineers && payload.engineers.length > 0) {
     const engineers = await User.find({

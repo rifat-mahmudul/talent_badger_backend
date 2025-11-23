@@ -10,7 +10,7 @@ const projectSchema = new mongoose.Schema<IProject>(
       ref: 'User',
       required: true,
     },
-    engineers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    engineers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required:true }],
     approvedEngineers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     status: {
       type: String,
