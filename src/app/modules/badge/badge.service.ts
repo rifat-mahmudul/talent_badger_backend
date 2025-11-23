@@ -1,6 +1,7 @@
 import AppError from '../../error/appError';
 import { fileUploader } from '../../helper/fileUploder';
 import pagination, { IOption } from '../../helper/pagenation';
+import userRole from '../user/user.constan';
 import User from '../user/user.model';
 import { IBadge } from './badge.interface';
 import Badge from './badge.model';
@@ -112,8 +113,11 @@ const requestBadgeLavel = async (userId: string) => {
   if (!user) {
     throw new AppError(404, 'User not found');
   }
-  if ((user?.completedProjectsCount as number) < 3) {
-    throw new AppError(400, 'You have not completed 3 projects yet');
+  if (user.role !== userRole.Engineer) {
+    throw new AppError(400, 'You are not an engineer');
+  }
+  if ((user?.completedProjectsCount as number) < 2) {
+    throw new AppError(400, 'You have not completed 2 projects yet');
   }
   user.lavelUpdateRequest = true;
   await user.save();
@@ -124,15 +128,31 @@ const alllavelRequest = async (params: any, options: IOption) => {
   const { searchTerm, ...filterData } = params;
 
   const andCondition: any[] = [];
+  const userSearchableFields = [
+    'firstName',
+    'lastName',
+    'phone',
+    'professionTitle',
+    'bio',
+    'skills',
+    'email',
+    'role',
+    'status',
+    'location',
+    'expertise',
+    'companyName',
+    'location',
+  ];
 
   if (searchTerm) {
-    const numberValue = Number(searchTerm);
-    if (!isNaN(numberValue)) {
-      andCondition.push({ lavel: numberValue });
-    }
+    andCondition.push({
+      $or: userSearchableFields.map((field) => ({
+        [field]: { $regex: searchTerm, $options: 'i' },
+      })),
+    });
   }
 
-  if (Object.keys(filterData).length > 0) {
+  if (Object.keys(filterData).length) {
     andCondition.push({
       $and: Object.entries(filterData).map(([field, value]) => ({
         [field]: value,
@@ -148,7 +168,8 @@ const alllavelRequest = async (params: any, options: IOption) => {
   })
     .sort({ [sortBy]: sortOrder } as any)
     .skip(skip)
-    .limit(limit);
+    .limit(limit)
+    .select('-password');
 
   const total = await User.countDocuments({
     ...whereCondition,
@@ -165,6 +186,32 @@ const alllavelRequest = async (params: any, options: IOption) => {
   };
 };
 
+const approvedLavel = async (userId: string, badgeId: string) => {
+  const user = await User.findById(userId).select('-password');
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+  user.lavelUpdateRequest = false;
+  user.level = (user.level || 1) + 1;
+
+  const badge = await Badge.findById(badgeId);
+  if (!badge) {
+    throw new AppError(404, 'Badge not found');
+  }
+
+  user.badge = badge._id;
+  await user.save();
+
+  return user;
+};
+
+const getSingleRequestLavel = async (userId: string) => {
+  const user = await User.findById(userId).select('-password');
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+  return user;
+};
 
 export const badgeService = {
   createBadge,
@@ -174,4 +221,6 @@ export const badgeService = {
   deleteBadge,
   requestBadgeLavel,
   alllavelRequest,
+  approvedLavel,
+  getSingleRequestLavel,
 };

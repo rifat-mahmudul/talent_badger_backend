@@ -65,9 +65,19 @@ const deleteBadge = catchAsync(async (req, res) => {
   });
 });
 
-const lavelUpdateRequest = catchAsync(async (req, res) => {
-  const userId = req.user.id;
-  const result = await badgeService.requestBadgeLavel(userId);
+// const lavelUpdateRequest = catchAsync(async (req, res) => {
+//   const userId = req.user.id;
+//   const result = await badgeService.requestBadgeLavel(userId);
+//   sendResponse(res, {
+//     statusCode: 200,
+//     success: true,
+//     message: 'Badge lavel request successfully',
+//     data: result,
+//   });
+// });
+
+const requestBadgeLavel = catchAsync(async (req, res) => {
+  const result = await badgeService.requestBadgeLavel(req.user?.id);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -76,6 +86,56 @@ const lavelUpdateRequest = catchAsync(async (req, res) => {
   });
 });
 
+const alllavelRequest = catchAsync(async (req, res) => {
+  const filter = pick(req.query, [
+    'searchTerm',
+    'firstName',
+    'lastName',
+    'phone',
+    'professionTitle',
+    'bio',
+    'skills',
+    'email',
+    'role',
+    'status',
+    'location',
+    'expertise',
+    'companyName',
+    'location',
+  ]);
+  const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
+  const result = await badgeService.alllavelRequest(filter, options);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Badge lavel request successfully',
+    meta: result.meta,
+    data: result.data,
+  });
+});
+
+const approvedLavel = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const { badgeId } = req.body;
+  const result = await badgeService.approvedLavel(id, badgeId);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Badge lavel approved successfully',
+    data: result,
+  });
+});
+
+const getSingleRequestLavel = catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const result = await badgeService.getSingleRequestLavel(id);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Badge lavel approved successfully',
+    data: result,
+  });
+});
 
 export const badgeController = {
   createBadge,
@@ -83,5 +143,8 @@ export const badgeController = {
   getSingleBadge,
   updateBadge,
   deleteBadge,
-  lavelUpdateRequest,
+  requestBadgeLavel,
+  alllavelRequest,
+  approvedLavel,
+  getSingleRequestLavel,
 };

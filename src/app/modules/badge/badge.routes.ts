@@ -5,6 +5,19 @@ import { badgeController } from './badge.controller';
 import { fileUploader } from '../../helper/fileUploder';
 const router = express.Router();
 
+router.get('/request', auth(userRole.Admin), badgeController.alllavelRequest);
+router.post(
+  '/request',
+  auth(userRole.Engineer),
+  badgeController.requestBadgeLavel,
+);
+router.get(
+  '/request/:id',
+  auth(userRole.Admin),
+  badgeController.getSingleRequestLavel,
+);
+router.put('/request/:id', auth(userRole.Admin), badgeController.approvedLavel);
+
 router.post(
   '/',
   auth(userRole.Admin),
