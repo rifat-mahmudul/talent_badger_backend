@@ -50,10 +50,25 @@ const getAllServices = async (params: any, options: IOption) => {
 
   const whereCondition = andCondition.length > 0 ? { $and: andCondition } : {};
 
-  const result = await Service.find(whereCondition)
-    .skip(skip)
-    .limit(limit)
-    .sort({ [sortBy]: sortOrder } as any);
+  const result = await Service.aggregate([
+    { $match: whereCondition },
+
+    {
+      $addFields: {
+        usersCount: { $size: '$users' },
+      },
+    },
+
+    {
+      $sort:
+        sortBy === 'topService'
+          ? { usersCount: -1 }
+          : { [sortBy]: sortOrder === 'asc' ? 1 : -1 },
+    },
+
+    { $skip: skip },
+    { $limit: limit },
+  ]);
 
   const total = await Service.countDocuments(whereCondition);
 
@@ -81,7 +96,7 @@ const updateService = async (
   payload: IService,
   file?: Express.Multer.File,
 ) => {
-  if(file){
+  if (file) {
     const serviceImage = await fileUploader.uploadToCloudinary(file);
     payload.image = serviceImage.secure_url;
   }
