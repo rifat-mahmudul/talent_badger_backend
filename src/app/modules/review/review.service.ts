@@ -3,7 +3,6 @@ import Project from '../project/project.model';
 import User from '../user/user.model';
 import AppError from '../../error/appError';
 
-
 const addReview = async (
   clientId: string,
   projectId: string,
@@ -25,7 +24,9 @@ const addReview = async (
     throw new AppError(400, 'You can only review completed projects');
   }
 
-  if (!project.approvedEngineers?.some((id) => id.equals(engineerId))) {
+  if (
+    !project.approvedEngineers?.some((ae) => ae.engineer.equals(engineerId))
+  ) {
     throw new AppError(400, 'This engineer did not work on this project');
   }
 
@@ -67,14 +68,12 @@ const getsingleReview = async (reviewId: string) => {
   return review;
 };
 
-
 const getEngineerReviews = async (engineerId: string) => {
   const reviews = await Review.find({ engineer: engineerId })
     .populate('client', 'firstName lastName profileImage')
     .populate('project', 'title');
   return reviews;
 };
-
 
 const updateReview = async (
   userId: string,
@@ -116,7 +115,6 @@ const updateReview = async (
 
   return review;
 };
-
 
 const deleteReview = async (userId: string, reviewId: string) => {
   const user = await User.findById(userId);
