@@ -42,6 +42,8 @@ export interface IUser {
   completedProjectsCount?: number;
   level?: number;
   avgRating?: number;
+  totalRating?: number;
+  ratingCount?: number;
   ismanager?: boolean;
   badge?: Types.ObjectId;
   lavelUpdateRequest?: boolean;
