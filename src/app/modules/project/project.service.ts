@@ -7,6 +7,7 @@ import Project from './project.model';
 import pagination, { IOption } from '../../helper/pagenation';
 import sendMailer from '../../helper/sendMailer';
 import Booking from '../booking/booking.model';
+import mongoose from 'mongoose';
 
 // Create Project
 const createProject = async (
@@ -28,8 +29,8 @@ const createProject = async (
     }
   }
 
-  if(!payload.engineers){
-    throw new AppError(404,"Empty Team Engineer")
+  if (!payload.engineers) {
+    throw new AppError(404, 'Empty Team Engineer');
   }
 
   // Validate engineers
@@ -59,122 +60,122 @@ const createProject = async (
   return project;
 };
 
-const getMyAllProjects = async (
-  userId: string,
-  params: any,
-  options: IOption,
-) => {
-  const user = await User.findById(userId);
-  if (!user) throw new AppError(404, 'User not found');
+// const getMyAllProjects = async (
+//   userId: string,
+//   params: any,
+//   options: IOption,
+// ) => {
+//   const user = await User.findById(userId);
+//   if (!user) throw new AppError(404, 'User not found');
 
-  const { page, limit, skip, sortBy, sortOrder } = pagination(options);
+//   const { page, limit, skip, sortBy, sortOrder } = pagination(options);
 
-  const { searchTerm, upcoming, today, next7, expired, ...filterData } = params;
+//   const { searchTerm, upcoming, today, next7, expired, ...filterData } = params;
 
-  const andCondition: any[] = [];
+//   const andCondition: any[] = [];
 
-  const searchableFields = ['title', 'description', 'status'];
+//   const searchableFields = ['title', 'description', 'status'];
 
-  // Search by term
-  if (searchTerm) {
-    andCondition.push({
-      $or: searchableFields.map((field) => ({
-        [field]: { $regex: searchTerm, $options: 'i' },
-      })),
-    });
-  }
+//   // Search by term
+//   if (searchTerm) {
+//     andCondition.push({
+//       $or: searchableFields.map((field) => ({
+//         [field]: { $regex: searchTerm, $options: 'i' },
+//       })),
+//     });
+//   }
 
-  // General Filters
-  if (Object.keys(filterData).length > 0) {
-    andCondition.push({
-      $and: Object.entries(filterData).map(([field, value]) => ({
-        [field]: value,
-      })),
-    });
-  }
+//   // General Filters
+//   if (Object.keys(filterData).length > 0) {
+//     andCondition.push({
+//       $and: Object.entries(filterData).map(([field, value]) => ({
+//         [field]: value,
+//       })),
+//     });
+//   }
 
-  // ================================
-  // DEADLINE FILTERS
-  // ================================
+//   // ================================
+//   // DEADLINE FILTERS
+//   // ================================
 
-  const now = new Date();
-  const todayStart = new Date(now.setHours(0, 0, 0, 0));
-  const todayEnd = new Date(now.setHours(23, 59, 59, 999));
-  const next7Days = new Date();
-  next7Days.setDate(next7Days.getDate() + 7);
+//   const now = new Date();
+//   const todayStart = new Date(now.setHours(0, 0, 0, 0));
+//   const todayEnd = new Date(now.setHours(23, 59, 59, 999));
+//   const next7Days = new Date();
+//   next7Days.setDate(next7Days.getDate() + 7);
 
-  // Upcoming (deliveryDate future)
-  if (upcoming === 'true') {
-    andCondition.push({
-      deliveryDate: { $gte: new Date() },
-    });
-  }
+//   // Upcoming (deliveryDate future)
+//   if (upcoming === 'true') {
+//     andCondition.push({
+//       deliveryDate: { $gte: new Date() },
+//     });
+//   }
 
-  // Today Deadline
-  if (today === 'true') {
-    andCondition.push({
-      deliveryDate: {
-        $gte: todayStart,
-        $lte: todayEnd,
-      },
-    });
-  }
+//   // Today Deadline
+//   if (today === 'true') {
+//     andCondition.push({
+//       deliveryDate: {
+//         $gte: todayStart,
+//         $lte: todayEnd,
+//       },
+//     });
+//   }
 
-  // Next 7 Days
-  if (next7 === 'true') {
-    andCondition.push({
-      deliveryDate: {
-        $gte: new Date(),
-        $lte: next7Days,
-      },
-    });
-  }
+//   // Next 7 Days
+//   if (next7 === 'true') {
+//     andCondition.push({
+//       deliveryDate: {
+//         $gte: new Date(),
+//         $lte: next7Days,
+//       },
+//     });
+//   }
 
-  // Expired Deadline (deliveryDate < now)
-  if (expired === 'true') {
-    andCondition.push({
-      deliveryDate: { $lt: new Date() },
-    });
-  }
+//   // Expired Deadline (deliveryDate < now)
+//   if (expired === 'true') {
+//     andCondition.push({
+//       deliveryDate: { $lt: new Date() },
+//     });
+//   }
 
-  // ================================
+//   // ================================
 
-  const whereCondition = andCondition.length > 0 ? { $and: andCondition } : {};
+//   const whereCondition = andCondition.length > 0 ? { $and: andCondition } : {};
 
-  let queryCondition: any = {};
+//   let queryCondition: any = {};
 
-  // Role-based filters
-  if (user.role === 'user') {
-    queryCondition = { ...whereCondition, client: user._id };
-  } else if (user.role === 'engineer') {
-    queryCondition = { ...whereCondition, engineers: user._id };
-  } else if (user.role === 'admin') {
-    queryCondition = { ...whereCondition };
-  } else {
-    throw new AppError(403, 'Invalid user role');
-  }
+//   // Role-based filters
+//   if (user.role === 'user') {
+//     queryCondition = { ...whereCondition, client: user._id };
+//   } else if (user.role === 'engineer') {
+//     queryCondition = { ...whereCondition, engineers: user._id };
+//   } else if (user.role === 'admin') {
+//     queryCondition = { ...whereCondition };
+//   } else {
+//     throw new AppError(403, 'Invalid user role');
+//   }
 
-  const total = await Project.countDocuments(queryCondition);
+//   const total = await Project.countDocuments(queryCondition);
 
-  const projects = await Project.find(queryCondition)
-    .populate('client', 'firstName lastName email profileImage')
-    .populate(
-      'engineers',
-      'firstName lastName email profileImage professionTitle',
-    )
-    .populate(
-      'approvedEngineers',
-      'firstName lastName email profileImage professionTitle ismanager',
-    )
-    .skip(skip)
-    .limit(limit)
-    .sort({ [sortBy]: sortOrder } as any);
+//   const projects = await Project.find(queryCondition)
+//     .populate('client', 'firstName lastName email profileImage')
+//     .populate(
+//       'engineers',
+//       'firstName lastName email profileImage professionTitle',
+//     )
+//     .populate(
+//       'approvedEngineers',
+//       'firstName lastName email profileImage professionTitle ismanager',
+//     )
+//     .skip(skip)
+//     .limit(limit)
+//     .sort({ [sortBy]: sortOrder } as any);
 
-  return {
-    data: projects,
-    meta: { total, page, limit },
-  };
-};
+//   return {
+//     data: projects,
+//     meta: { total, page, limit },
+//   };
+// };
 
 // Engineer Approve Project
 // const approveProject = async (projectId: string, engineerId: string) => {
@@ -209,56 +210,55 @@ const getMyAllProjects = async (
 //   return project;
 // };
 
-const approveProject = async (projectId: string, engineerId: string) => {
-  const project = await Project.findById(projectId).populate(
-    'engineers',
-    'firstName lastName email profileImage rate',
-  );
+// const approveProject = async (projectId: string, engineerId: string) => {
+//   const project = await Project.findById(projectId).populate(
+//     'engineers',
+//     'firstName lastName email profileImage rate',
+//   );
 
-  if (!project) throw new AppError(404, 'Project not found');
+//   if (!project) throw new AppError(404, 'Project not found');
 
-  const engineer = await User.findById(engineerId);
-  if (!engineer || engineer.role !== 'engineer') {
-    throw new AppError(404, 'Engineer not found or invalid role');
-  }
+//   const engineer = await User.findById(engineerId);
+//   if (!engineer || engineer.role !== 'engineer') {
+//     throw new AppError(404, 'Engineer not found or invalid role');
+//   }
 
-  // ✅ Safe check if engineer is assigned
-  const isAssigned = project.engineers.some(
-    (eng: any) => eng?._id?.equals(engineer._id),
-  );
+//   // ✅ Safe check if engineer is assigned
+//   const isAssigned = project.engineers.some(
+//     (eng: any) => eng?._id?.equals(engineer._id),
+//   );
 
-  if (!isAssigned) {
-    throw new AppError(403, 'Engineer is not assigned to this project');
-  }
+//   if (!isAssigned) {
+//     throw new AppError(403, 'Engineer is not assigned to this project');
+//   }
 
-  // Ensure approvedEngineers exists
-  if (!project.approvedEngineers) project.approvedEngineers = [];
+//   // Ensure approvedEngineers exists
+//   if (!project.approvedEngineers) project.approvedEngineers = [];
 
-  // Engineer already approved?
-  const alreadyApproved = project.approvedEngineers.some((id: any) =>
-    id?.equals?.(engineer._id),
-  );
+//   // Engineer already approved?
+//   const alreadyApproved = project.approvedEngineers.some((id: any) =>
+//     id?.equals?.(engineer._id),
+//   );
 
-  // Add to approval list if not already approved
-  if (!alreadyApproved) {
-    project.approvedEngineers.push(engineer._id);
-  }
+//   // Add to approval list if not already approved
+//   if (!alreadyApproved) {
+//     project.approvedEngineers.push(engineer._id);
+//   }
 
-  // Count assigned & approved engineers
-  const totalAssigned = project.engineers.length;
-  const totalApproved = project.approvedEngineers.length;
+//   // Count assigned & approved engineers
+//   const totalAssigned = project.engineers.length;
+//   const totalApproved = project.approvedEngineers.length;
 
-  // 🔥 Only set project to in_progress when ALL engineers approve
-  if (totalAssigned === totalApproved) {
-    project.status = 'in_progress';
-  }
+//   // 🔥 Only set project to in_progress when ALL engineers approve
+//   if (totalAssigned === totalApproved) {
+//     project.status = 'in_progress';
+//   }
 
-  project.lastUpdated = new Date();
-  await project.save();
+//   project.lastUpdated = new Date();
+//   await project.save();
 
-  return project;
-};
-
+//   return project;
+// };
 
 // const rejectProject = async (projectId: string, engineerId: string) => {
 //   const project = await Project.findById(projectId).populate(
@@ -297,6 +297,176 @@ const approveProject = async (projectId: string, engineerId: string) => {
 //   return project;
 // };
 
+
+const getMyAllProjects = async (
+  userId: string,
+  params: any,
+  options: IOption,
+) => {
+  const user = await User.findById(userId);
+  if (!user) throw new AppError(404, 'User not found');
+
+  const { page, limit, skip, sortBy, sortOrder } = pagination(options);
+  const { searchTerm, upcoming, today, next7, expired, approvedStatus, ...filterData } = params;
+
+  const andCondition: any[] = [];
+
+  const searchableFields = ['title', 'description', 'status'];
+
+  // Search by term
+  if (searchTerm) {
+    andCondition.push({
+      $or: searchableFields.map((field) => ({
+        [field]: { $regex: searchTerm, $options: 'i' },
+      })),
+    });
+  }
+
+  // General Filters
+  if (Object.keys(filterData).length > 0) {
+    andCondition.push({
+      $and: Object.entries(filterData).map(([field, value]) => ({
+        [field]: value,
+      })),
+    });
+  }
+
+  // Approved engineers status filter
+  if (approvedStatus) {
+    andCondition.push({
+      'approvedEngineers.status': approvedStatus,
+    });
+  }
+
+  // ================================
+  // DEADLINE FILTERS
+  // ================================
+
+  const now = new Date();
+  const todayStart = new Date(now.setHours(0, 0, 0, 0));
+  const todayEnd = new Date(now.setHours(23, 59, 59, 999));
+  const next7Days = new Date();
+  next7Days.setDate(next7Days.getDate() + 7);
+
+  if (upcoming === 'true') {
+    andCondition.push({
+      deliveryDate: { $gte: new Date() },
+    });
+  }
+
+  if (today === 'true') {
+    andCondition.push({
+      deliveryDate: { $gte: todayStart, $lte: todayEnd },
+    });
+  }
+
+  if (next7 === 'true') {
+    andCondition.push({
+      deliveryDate: { $gte: new Date(), $lte: next7Days },
+    });
+  }
+
+  if (expired === 'true') {
+    andCondition.push({
+      deliveryDate: { $lt: new Date() },
+    });
+  }
+
+  // ================================
+  const whereCondition = andCondition.length > 0 ? { $and: andCondition } : {};
+
+  // Role-based filters
+  let queryCondition: any = {};
+  if (user.role === 'user') {
+    queryCondition = { ...whereCondition, client: user._id };
+  } else if (user.role === 'engineer') {
+    queryCondition = { ...whereCondition, engineers: user._id };
+  } else if (user.role === 'admin') {
+    queryCondition = { ...whereCondition };
+  } else {
+    throw new AppError(403, 'Invalid user role');
+  }
+
+  const total = await Project.countDocuments(queryCondition);
+
+  const projects = await Project.find(queryCondition)
+    .populate('client', 'firstName lastName email profileImage')
+    .populate(
+      'engineers',
+      'firstName lastName email profileImage professionTitle'
+    )
+    .populate({
+      path: 'approvedEngineers.engineer',
+      select: 'firstName lastName email profileImage professionTitle',
+    })
+    .skip(skip)
+    .limit(limit)
+    .sort({ [sortBy]: sortOrder } as any);
+
+  // Calculate project progress as average of approved engineers
+  const dataWithProgress = projects.map((project: any) => {
+    if (project.approvedEngineers?.length > 0) {
+      const totalProgress = project.approvedEngineers.reduce(
+        (sum: number, eng: any) => sum + (eng.progress || 0),
+        0
+      );
+      project.progress = Math.round(totalProgress / project.approvedEngineers.length);
+    }
+    return project;
+  });
+
+  return {
+    data: dataWithProgress,
+    meta: { total, page, limit },
+  };
+};
+
+
+const approveProject = async (projectId: string, engineerId: string) => {
+  const project = await Project.findById(projectId);
+
+  if (!project) throw new AppError(404, 'Project not found');
+
+  // Check engineer exists in assigned list
+  const isAssigned = project.engineers.some(
+    (id) => id.toString() === engineerId,
+  );
+
+  if (!isAssigned)
+    throw new AppError(403, 'Engineer is not assigned to this project');
+
+  // Ensure approvedEngineers exists
+  if (!project.approvedEngineers) {
+    project.approvedEngineers = [];
+  }
+
+  // Already approved ?
+  const alreadyApproved = project.approvedEngineers.some(
+    (eng) => eng.engineer.toString() === engineerId,
+  );
+
+  if (!alreadyApproved) {
+    project.approvedEngineers.push({
+      engineer: new mongoose.Types.ObjectId(engineerId),
+      status: 'approved',
+      isManager: false,
+    });
+
+    // Remove engineer from engineers[] list once approved
+    project.engineers = project.engineers.filter(
+      (id) => id.toString() !== engineerId,
+    );
+  }
+
+  // Auto update project status if all approved
+  if (project.approvedEngineers.length > 0 && project.engineers.length === 0) {
+    project.status = 'in_progress';
+  }
+
+  await project.save();
+  return project;
+};
+
 const rejectProject = async (projectId: string, engineerId: string) => {
   const project = await Project.findById(projectId).populate(
     'engineers',
@@ -311,9 +481,7 @@ const rejectProject = async (projectId: string, engineerId: string) => {
   }
 
   // Must be assigned engineer
-  if (
-    !project.engineers.some((id: any) => id?._id?.equals(engineer._id))
-  ) {
+  if (!project.engineers.some((id: any) => id?._id?.equals(engineer._id))) {
     throw new AppError(403, 'Engineer is not assigned to this project');
   }
 
@@ -342,36 +510,60 @@ const rejectProject = async (projectId: string, engineerId: string) => {
   return project;
 };
 
-
 // Update Progress (by engineer)
 const updateProgress = async (
   projectId: string,
   engineerId: string,
-  progress: number,
+  progress: number
 ) => {
   const project = await Project.findById(projectId);
-  if (!project) throw new AppError(404, 'Project not found');
+  if (!project) throw new AppError(404, "Project not found");
 
-  if (!project.approvedEngineers?.some((id) => id.equals(engineerId))) {
-    throw new AppError(403, 'Engineer has not approved this project');
-  }
+  if (!project.approvedEngineers)
+    throw new AppError(400, "No approved engineers");
 
-  project.progress = Math.min(Math.max(progress, 0), 100);
+  // Find engineer inside approvedEngineers
+  const engineerObj = project.approvedEngineers.find(
+    (eng) => eng.engineer.toString() === engineerId
+  );
+
+  if (!engineerObj)
+    throw new AppError(403, "Engineer is not approved for this project");
+
+  // Update individual engineer progress
+  engineerObj.progress = Math.min(Math.max(progress, 0), 100);
+
+  // Calculate average project progress
+  const totalEngineers = project.approvedEngineers.length;
+  const totalProgress = project.approvedEngineers.reduce(
+    (sum, eng) => sum + (eng.progress || 0),
+    0
+  );
+
+  const avgProgress = totalProgress / totalEngineers;
+
+  project.progress = Math.round(avgProgress);
   project.lastUpdated = new Date();
 
-  // If progress reaches 100%, mark completed
-  if (project.progress === 100) {
-    project.status = 'completed';
+  // If all engineers completed (100%)
+  const allCompleted = project.approvedEngineers.every(
+    (eng) => (eng.progress || 0) === 100
+  );
+
+  if (allCompleted) {
+    project.status = "completed";
     project.lastUpdated = new Date();
+
     const user = await User.findById(project.client);
     if (user?.email) {
-      sendMailer(user.email, 'Project Completed', project.title);
+      sendMailer(user.email, "Project Completed", project.title);
     }
   }
 
   await project.save();
   return project;
 };
+
 
 const updateMyProject = async (
   projectId: string,
@@ -429,6 +621,37 @@ const singleProject = async (projectId: string) => {
   return { project, booking };
 };
 
+// const assasintManager = async (
+//   userId: string,
+//   projectId: string,
+//   engineerId: string,
+// ) => {
+//   const user = await User.findById(userId);
+//   if (!user) throw new AppError(404, 'User not found');
+//   if (user.role !== 'user')
+//     throw new AppError(403, 'Only clients can assign engineers');
+
+//   const project = await Project.findById(projectId);
+//   if (!project) throw new AppError(404, 'Project not found');
+
+//   if (project.client.toString() !== userId)
+//     throw new AppError(403, 'Only the client can assign engineers');
+
+//   if (!project?.approvedEngineers?.some((id) => id.toString() === engineerId))
+//     throw new AppError(400, 'Engineer not assigned to this your project');
+
+//   const engineer = await User.findById(engineerId).select(
+//     'ismanager email role experience skills expertise location level badge profileImage firstName lastName',
+//   );
+//   if (!engineer || engineer.role !== 'engineer')
+//     throw new AppError(404, 'Engineer not found');
+
+//   engineer.ismanager = true;
+//   await engineer.save();
+
+//   return engineer;
+// };
+
 const assasintManager = async (
   userId: string,
   projectId: string,
@@ -442,11 +665,13 @@ const assasintManager = async (
   const project = await Project.findById(projectId);
   if (!project) throw new AppError(404, 'Project not found');
 
-  if (project.client.toString() !== userId)
-    throw new AppError(403, 'Only the client can assign engineers');
+  // Check this engineer is approved
+  const approvedEngineer = project.approvedEngineers?.find(
+    (eng) => eng.engineer.toString() === engineerId,
+  );
 
-  if (!project?.approvedEngineers?.some((id) => id.toString() === engineerId))
-    throw new AppError(400, 'Engineer not assigned to this your project');
+  if (!approvedEngineer)
+    throw new AppError(400, 'Engineer not approved for this project');
 
   const engineer = await User.findById(engineerId).select(
     'ismanager email role experience skills expertise location level badge profileImage firstName lastName',
@@ -457,7 +682,11 @@ const assasintManager = async (
   engineer.ismanager = true;
   await engineer.save();
 
-  return engineer;
+  // Set manager
+  approvedEngineer.isManager = true;
+
+  await project.save();
+  return project;
 };
 
 export const projectService = {

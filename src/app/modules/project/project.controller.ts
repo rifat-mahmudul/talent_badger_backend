@@ -79,6 +79,7 @@ const getMyProjects = catchAsync(async (req: Request, res: Response) => {
     'today',
     'next7',
     'expired',
+    'approvedStatus',
   ]);
   const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
 

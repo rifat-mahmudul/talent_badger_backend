@@ -1,5 +1,12 @@
 import { Types } from 'mongoose';
 
+export interface IApprovedEngineer {
+  engineer: Types.ObjectId;
+  status: 'pending' | 'approved' | 'rejected';
+  isManager: boolean;
+  progress?: number;
+}
+
 export interface IProject {
   _id?: Types.ObjectId;
   title: string;
@@ -13,7 +20,8 @@ export interface IProject {
   progress?: number;
   totalTimeline?: number;
   deliveryDate?: Date;
-  approvedEngineers?: Types.ObjectId[];
+  // approvedEngineers?: Types.ObjectId[];
+  approvedEngineers?: IApprovedEngineer[];
   rejectedEngineers?: Types.ObjectId[];
   startDate?: Date;
   usedAmount?: number;

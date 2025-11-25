@@ -10,8 +10,27 @@ const projectSchema = new mongoose.Schema<IProject>(
       ref: 'User',
       required: true,
     },
-    engineers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required:true }],
-    approvedEngineers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    engineers: [
+      { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    ],
+    // approvedEngineers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    approvedEngineers: [
+      {
+        engineer: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'approved', 'rejected'],
+          default: 'pending',
+        },
+        isManager: { type: Boolean, default: false },
+        progress: Number,
+      },
+    ],
+
     status: {
       type: String,
       enum: ['pending', 'in_progress', 'completed', 'cancelled'],
