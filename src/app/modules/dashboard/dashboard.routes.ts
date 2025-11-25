@@ -15,4 +15,10 @@ router.get(
   dashboardController.userDashboardOverview,
 );
 
+router.get(
+  '/monthly-earnings',
+  auth(userRole.Admin),
+  dashboardController.getMonthlyEarnings,
+);
+
 export const dashboardRouter = router;
