@@ -763,10 +763,12 @@ const deleteMyProjectEngineer = async (
     throw new AppError(400, 'Engineer not found in project');
   }
 
+  // console.log(engineerId)
+
   // 4. Remove (pull) engineer
   const updatedProject = await Project.findByIdAndUpdate(
     projectId,
-    { $pull: { engineers: engineerId } },
+    { $pull: { engineers: { $in: engineerId } } },
     { new: true },
   );
 
