@@ -40,6 +40,12 @@ router.put(
 );
 
 router.put(
+  '/engineer-status',
+  auth(userRole.Engineer),
+  userController.engineerStatus,
+);
+
+router.put(
   '/:id',
   auth(userRole.Admin),
   fileUploader.upload.single('profileImage'),

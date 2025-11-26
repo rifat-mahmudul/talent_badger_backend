@@ -134,7 +134,16 @@ const getEngineerStripeAccount = catchAsync(async (req, res) => {
   });
 });
 
-
+const engineerStatus = catchAsync(async (req, res) => {
+  const { userstatus } = req.body;
+  const result = await userService.engineerStatus(req.user?.id, userstatus);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User updated successfully',
+    data: result,
+  });
+});
 
 export const userController = {
   createUser,
@@ -146,4 +155,5 @@ export const userController = {
   updateMyProfile,
   createEngineerStripeAccount,
   getEngineerStripeAccount,
+  engineerStatus,
 };
