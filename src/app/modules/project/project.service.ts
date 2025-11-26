@@ -297,7 +297,6 @@ const createProject = async (
 //   return project;
 // };
 
-
 const getMyAllProjects = async (
   userId: string,
   params: any,
@@ -307,7 +306,15 @@ const getMyAllProjects = async (
   if (!user) throw new AppError(404, 'User not found');
 
   const { page, limit, skip, sortBy, sortOrder } = pagination(options);
-  const { searchTerm, upcoming, today, next7, expired, approvedStatus, ...filterData } = params;
+  const {
+    searchTerm,
+    upcoming,
+    today,
+    next7,
+    expired,
+    approvedStatus,
+    ...filterData
+  } = params;
 
   const andCondition: any[] = [];
 
@@ -381,6 +388,13 @@ const getMyAllProjects = async (
     queryCondition = { ...whereCondition, client: user._id };
   } else if (user.role === 'engineer') {
     queryCondition = { ...whereCondition, engineers: user._id };
+    queryCondition = {
+      ...whereCondition,
+      $or: [
+        { engineers: user._id },
+        { 'approvedEngineers.engineer': user._id },
+      ],
+    };
   } else if (user.role === 'admin') {
     queryCondition = { ...whereCondition };
   } else {
@@ -393,7 +407,7 @@ const getMyAllProjects = async (
     .populate('client', 'firstName lastName email profileImage')
     .populate(
       'engineers',
-      'firstName lastName email profileImage professionTitle'
+      'firstName lastName email profileImage professionTitle',
     )
     .populate({
       path: 'approvedEngineers.engineer',
@@ -408,9 +422,11 @@ const getMyAllProjects = async (
     if (project.approvedEngineers?.length > 0) {
       const totalProgress = project.approvedEngineers.reduce(
         (sum: number, eng: any) => sum + (eng.progress || 0),
-        0
+        0,
       );
-      project.progress = Math.round(totalProgress / project.approvedEngineers.length);
+      project.progress = Math.round(
+        totalProgress / project.approvedEngineers.length,
+      );
     }
     return project;
   });
@@ -420,7 +436,6 @@ const getMyAllProjects = async (
     meta: { total, page, limit },
   };
 };
-
 
 const approveProject = async (projectId: string, engineerId: string) => {
   const project = await Project.findById(projectId);
@@ -514,21 +529,21 @@ const rejectProject = async (projectId: string, engineerId: string) => {
 const updateProgress = async (
   projectId: string,
   engineerId: string,
-  progress: number
+  progress: number,
 ) => {
   const project = await Project.findById(projectId);
-  if (!project) throw new AppError(404, "Project not found");
+  if (!project) throw new AppError(404, 'Project not found');
 
   if (!project.approvedEngineers)
-    throw new AppError(400, "No approved engineers");
+    throw new AppError(400, 'No approved engineers');
 
   // Find engineer inside approvedEngineers
   const engineerObj = project.approvedEngineers.find(
-    (eng) => eng.engineer.toString() === engineerId
+    (eng) => eng.engineer.toString() === engineerId,
   );
 
   if (!engineerObj)
-    throw new AppError(403, "Engineer is not approved for this project");
+    throw new AppError(403, 'Engineer is not approved for this project');
 
   // Update individual engineer progress
   engineerObj.progress = Math.min(Math.max(progress, 0), 100);
@@ -537,7 +552,7 @@ const updateProgress = async (
   const totalEngineers = project.approvedEngineers.length;
   const totalProgress = project.approvedEngineers.reduce(
     (sum, eng) => sum + (eng.progress || 0),
-    0
+    0,
   );
 
   const avgProgress = totalProgress / totalEngineers;
@@ -547,23 +562,22 @@ const updateProgress = async (
 
   // If all engineers completed (100%)
   const allCompleted = project.approvedEngineers.every(
-    (eng) => (eng.progress || 0) === 100
+    (eng) => (eng.progress || 0) === 100,
   );
 
   if (allCompleted) {
-    project.status = "completed";
+    project.status = 'completed';
     project.lastUpdated = new Date();
 
     const user = await User.findById(project.client);
     if (user?.email) {
-      sendMailer(user.email, "Project Completed", project.title);
+      sendMailer(user.email, 'Project Completed', project.title);
     }
   }
 
   await project.save();
   return project;
 };
-
 
 const updateMyProject = async (
   projectId: string,
