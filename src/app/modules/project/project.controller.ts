@@ -164,6 +164,45 @@ const assasintManager = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+
+const addMyProjectEngineer = catchAsync(async (req, res) => {
+  const { projectId } = req.params;
+  const { engineerIds } = req.body;
+  const userId = req.user.id;
+
+  const result = await projectService.addMyProjectEngineer(
+    projectId,
+    userId,
+    engineerIds,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Engineer(s) added successfully',
+    data: result,
+  });
+});
+
+const deleteMyProjectEngineer = catchAsync(async (req, res) => {
+  const { projectId } = req.params;
+  const { engineerIds } = req.body;
+  const userId = req.user.id;
+
+  const result = await projectService.deleteMyProjectEngineer(
+    projectId,
+    userId,
+    engineerIds,
+  );
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Engineer(s) deleted successfully',
+    data: result,
+  });
+});
+
 export const projectController = {
   createProject,
   approveProject,
@@ -174,4 +213,6 @@ export const projectController = {
   deleteProject,
   singleProject,
   assasintManager,
+  addMyProjectEngineer,
+  deleteMyProjectEngineer,
 };

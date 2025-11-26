@@ -17,7 +17,7 @@ const createBadge = catchAsync(async (req, res) => {
 });
 
 const getAllBadges = catchAsync(async (req, res) => {
-  const filters = pick(req.query, ['searchTerm', 'lavel']);
+  const filters = pick(req.query, ['searchTerm', 'name']);
   const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
   const result = await badgeService.getAllBadges(filters, options);
 
@@ -77,7 +77,8 @@ const deleteBadge = catchAsync(async (req, res) => {
 // });
 
 const requestBadgeLavel = catchAsync(async (req, res) => {
-  const result = await badgeService.requestBadgeLavel(req.user?.id);
+  const badgeId = req.body.badgeId;
+  const result = await badgeService.requestBadgeLavel(req.user?.id, badgeId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -114,10 +115,9 @@ const alllavelRequest = catchAsync(async (req, res) => {
   });
 });
 
-const approvedLavel = catchAsync(async (req, res) => {
+const approvedBadge = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const { badgeId } = req.body;
-  const result = await badgeService.approvedLavel(id, badgeId);
+  const result = await badgeService.approvedBadge(id!);
   sendResponse(res, {
     statusCode: 200,
     success: true,
@@ -145,6 +145,6 @@ export const badgeController = {
   deleteBadge,
   requestBadgeLavel,
   alllavelRequest,
-  approvedLavel,
+  approvedBadge,
   getSingleRequestLavel,
 };

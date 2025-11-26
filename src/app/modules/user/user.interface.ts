@@ -47,4 +47,6 @@ export interface IUser {
   ismanager?: boolean;
   badge?: Types.ObjectId;
   lavelUpdateRequest?: boolean;
+  badgeUpdateRequest?: boolean;
+  userstatus?: 'available' | 'not_available';
 }

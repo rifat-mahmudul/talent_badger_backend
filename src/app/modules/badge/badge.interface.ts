@@ -1,4 +1,4 @@
 export interface IBadge {
-  lavel: number;
+  name: string;
   badge: string[];
 }

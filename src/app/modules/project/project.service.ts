@@ -703,6 +703,78 @@ const assasintManager = async (
   return project;
 };
 
+const addMyProjectEngineer = async (
+  projectId: string,
+  userId: string,
+  engineerIds: string[],
+) => {
+  // 1. Fetch project
+  const project = await Project.findById(projectId);
+  if (!project) throw new AppError(404, 'Project not found');
+
+  // 2. Prevent unauthorized update
+  if (project.client.toString() !== userId) {
+    throw new AppError(403, 'Only the client can update the project');
+  }
+
+  // 3. Remove duplicate engineers
+  const existing = project.engineers.map((id) => id.toString());
+
+  const newEngineers = engineerIds.filter(
+    (id) => !existing.includes(id.toString()),
+  );
+
+  if (newEngineers.length === 0) {
+    throw new AppError(400, 'Engineers already added');
+  }
+
+  // 4. Push new engineers
+  const updatedProject = await Project.findByIdAndUpdate(
+    projectId,
+    {
+      $push: { engineers: { $each: newEngineers } },
+    },
+    { new: true },
+  );
+
+  return updatedProject;
+};
+
+const deleteMyProjectEngineer = async (
+  projectId: string,
+  userId: string,
+  engineerId: string,
+) => {
+  // 1. Get project
+  const project = await Project.findById(projectId);
+  if (!project) throw new AppError(404, 'Project not found');
+
+  // 2. Only client can delete engineers
+  if (project.client.toString() !== userId) {
+    throw new AppError(403, 'Only the client can update the project');
+  }
+
+  // 3. Check if engineer exists
+  const exists = project.engineers.some(
+    (id) => id.toString() === engineerId.toString(),
+  );
+
+  if (!exists) {
+    throw new AppError(400, 'Engineer not found in project');
+  }
+
+  // console.log(engineerId)
+
+  // 4. Remove (pull) engineer
+  const updatedProject = await Project.findByIdAndUpdate(
+    projectId,
+    { $pull: { engineers: { $in: engineerId } } },
+    { new: true },
+  );
+
+  return updatedProject;
+};
+
 export const projectService = {
   createProject,
   approveProject,
@@ -713,4 +785,6 @@ export const projectService = {
   deleteProject,
   singleProject,
   assasintManager,
+  addMyProjectEngineer,
+  deleteMyProjectEngineer,
 };

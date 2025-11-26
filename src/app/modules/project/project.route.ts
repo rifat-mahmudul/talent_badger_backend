@@ -62,6 +62,18 @@ router.put(
   projectController.updateProgress,
 );
 
+// add engineer to project
+router.put(
+  '/:projectId/engineer',
+  auth(userRole.User),
+  projectController.addMyProjectEngineer,
+);
+router.delete(
+  '/:projectId/engineer',
+  auth(userRole.User),
+  projectController.deleteMyProjectEngineer,
+);
+
 // single project
 router.get('/:id', projectController.singleProject);
 

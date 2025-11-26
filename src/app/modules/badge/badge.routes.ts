@@ -16,7 +16,7 @@ router.get(
   auth(userRole.Admin),
   badgeController.getSingleRequestLavel,
 );
-router.put('/request/:id', auth(userRole.Admin), badgeController.approvedLavel);
+router.put('/request/:id', auth(userRole.Admin), badgeController.approvedBadge);
 
 router.post(
   '/',
@@ -24,8 +24,16 @@ router.post(
   fileUploader.upload.array('badge'),
   badgeController.createBadge,
 );
-router.get('/', auth(userRole.Admin), badgeController.getAllBadges);
-router.get('/:id', auth(userRole.Admin), badgeController.getSingleBadge);
+router.get(
+  '/',
+  auth(userRole.Admin, userRole.Engineer),
+  badgeController.getAllBadges,
+);
+router.get(
+  '/:id',
+  auth(userRole.Admin, userRole.Engineer),
+  badgeController.getSingleBadge,
+);
 router.put(
   '/:id',
   auth(userRole.Admin),

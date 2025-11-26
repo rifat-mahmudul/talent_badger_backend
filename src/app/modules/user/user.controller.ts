@@ -89,15 +89,19 @@ const getMyProfile = catchAsync(async (req, res) => {
 
 const updateMyProfile = catchAsync(async (req, res) => {
   const filesObj = req.files as { [fieldname: string]: Express.Multer.File[] };
+
   const filesWithField = Object.keys(filesObj).flatMap((fieldname) =>
-    filesObj[fieldname].map((file) => ({ ...file, fieldname }))
+    filesObj[fieldname].map((file) => ({
+      ...file,
+      fieldname,
+    })),
   );
 
+  const formData = req.body.data ? JSON.parse(req.body.data) : req.body;
 
-  const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
   const result = await userService.updateMyProfile(
     req.user?.id,
-    fromData,
+    formData,
     filesWithField,
   );
 
@@ -129,6 +133,8 @@ const getEngineerStripeAccount = catchAsync(async (req, res) => {
     data: result,
   });
 });
+
+
 
 export const userController = {
   createUser,

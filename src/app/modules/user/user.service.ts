@@ -117,17 +117,19 @@ const getMyProfile = async (id: string) => {
 const updateMyProfile = async (
   id: string,
   payload: IUser,
-  files?: Express.Multer.File[],
+  files?: { fieldname: string; path: string }[],
 ) => {
   if (files?.length) {
     const uploadResults = await Promise.all(
-      files.map((file) => fileUploader.uploadToCloudinary(file)),
+      files.map((file) => fileUploader.uploadToCloudinary(file as any))
     );
 
     const fileMap: Record<string, string> = {};
-    files.forEach((file, index) => {
-      if (uploadResults[index]) {
-        fileMap[file.fieldname] = uploadResults[index].secure_url;
+
+    uploadResults.forEach((uploaded, index) => {
+      if (uploaded) {
+        const field = files[index].fieldname;
+        fileMap[field] = uploaded.secure_url;
       }
     });
 
@@ -144,6 +146,7 @@ const updateMyProfile = async (
 
   return result;
 };
+
 
 // engineer stripe account create
 const createEngineerStripeAccount = async (userId: string) => {
@@ -213,6 +216,24 @@ const getEngineerStripeAccount = async (userId: string) => {
   return account;
 };
 
+const engineerStatus = async (userId: string, userStatus: string) => {
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new AppError(404, 'User not found');
+  }
+
+  const result = await User.findByIdAndUpdate(
+    userId,
+    { userstatus: userStatus },
+    { new: true },
+  );
+  if (!result) {
+    throw new AppError(404, 'User not found');
+  }
+  return result;
+};
+
 export const userService = {
   createUser,
   getAllUser,
@@ -223,4 +244,5 @@ export const userService = {
   updateMyProfile,
   createEngineerStripeAccount,
   getEngineerStripeAccount,
+  engineerStatus,
 };

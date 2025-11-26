@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { IUser } from './user.interface';
 import bcrypt from 'bcryptjs';
+import userRole from './user.constan';
 
 const userSchema = new mongoose.Schema<IUser>(
   {
@@ -56,9 +57,15 @@ const userSchema = new mongoose.Schema<IUser>(
     lavelUpdateRequest: { type: Boolean },
     level: { type: Number, default: 1 },
     avgRating: { type: Number, default: 0 },
+    badgeUpdateRequest: { type: Boolean },
     badge: { type: mongoose.Schema.Types.ObjectId, ref: 'Badge' },
 
     ismanager: { type: Boolean, default: false },
+    userstatus: {
+      type: String,
+      enum: ['available', 'not_available'],
+      default: 'available',
+    },
   },
   {
     timestamps: true,
@@ -69,6 +76,15 @@ userSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
     const hashedPassword = await bcrypt.hash(this.password, 10);
     this.password = hashedPassword;
+  }
+  next();
+});
+
+userSchema.pre('validate', async function (next) {
+  if (this.role !== userRole.Engineer) {
+    this.userstatus = undefined;
+  } else {
+    this.userstatus = 'available';
   }
   next();
 });

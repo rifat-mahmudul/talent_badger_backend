@@ -29,12 +29,17 @@ const getAllBadges = async (params: any, options: IOption) => {
   const { searchTerm, ...filterData } = params;
 
   const andCondition: any[] = [];
+  const userSearchableFields = ['name'];
 
   if (searchTerm) {
-    const numberValue = Number(searchTerm);
-    if (!isNaN(numberValue)) {
-      andCondition.push({ lavel: numberValue });
-    }
+    andCondition.push({
+      $or: userSearchableFields.map((field) => ({
+        [field]: {
+          $regex: searchTerm,
+          $options: 'i',
+        },
+      })),
+    });
   }
 
   if (Object.keys(filterData).length > 0) {
@@ -104,23 +109,40 @@ const deleteBadge = async (id: string) => {
   if (!badge) {
     throw new AppError(404, 'Badge not found');
   }
+  const users = await User.find({ badge: id });
+  if (users.length > 0) {
+    throw new AppError(400, 'Badge is assigned to users');
+  }
   const result = await Badge.findByIdAndDelete(id);
   return result;
 };
 
-const requestBadgeLavel = async (userId: string) => {
+const requestBadgeLavel = async (userId: string, badgeId: string) => {
   const user = await User.findById(userId);
-  if (!user) {
-    throw new AppError(404, 'User not found');
-  }
+  if (!user) throw new AppError(404, 'User not found');
+
   if (user.role !== userRole.Engineer) {
     throw new AppError(400, 'You are not an engineer');
   }
-  if ((user?.completedProjectsCount as number) < 2) {
+
+  if ((user.completedProjectsCount as number) < 0) {
     throw new AppError(400, 'You have not completed 2 projects yet');
   }
-  user.lavelUpdateRequest = true;
+
+  const badge = await Badge.findById(badgeId);
+  if (!badge) throw new AppError(404, 'Badge not found');
+
+  // Mark request as pending
+  user.badgeUpdateRequest = true;
+  user.badge = badge._id; // badge assign but not active until approved
+
   await user.save();
+
+  return {
+    message: 'Badge request submitted. Waiting for admin approval.',
+    user,
+    badge,
+  };
 };
 
 const alllavelRequest = async (params: any, options: IOption) => {
@@ -164,7 +186,7 @@ const alllavelRequest = async (params: any, options: IOption) => {
 
   const badges = await User.find({
     ...whereCondition,
-    lavelUpdateRequest: true,
+    badgeUpdateRequest: true,
   })
     .sort({ [sortBy]: sortOrder } as any)
     .skip(skip)
@@ -186,23 +208,25 @@ const alllavelRequest = async (params: any, options: IOption) => {
   };
 };
 
-const approvedLavel = async (userId: string, badgeId: string) => {
-  const user = await User.findById(userId).select('-password');
-  if (!user) {
-    throw new AppError(404, 'User not found');
-  }
-  user.lavelUpdateRequest = false;
-  user.level = (user.level || 1) + 1;
+const approvedBadge = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) throw new AppError(404, 'User not found');
 
-  const badge = await Badge.findById(badgeId);
-  if (!badge) {
-    throw new AppError(404, 'Badge not found');
+  if (!user.badge) {
+    throw new AppError(400, 'No badge request found');
   }
 
-  user.badge = badge._id;
+  // Approve the badge
+  user.badgeUpdateRequest = false;
+
   await user.save();
 
-  return user;
+  const badge = await Badge.findById(user.badge);
+
+  return {
+    badge,
+    user,
+  };
 };
 
 const getSingleRequestLavel = async (userId: string) => {
@@ -221,6 +245,6 @@ export const badgeService = {
   deleteBadge,
   requestBadgeLavel,
   alllavelRequest,
-  approvedLavel,
+  approvedBadge,
   getSingleRequestLavel,
 };
