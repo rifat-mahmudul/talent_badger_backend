@@ -407,11 +407,11 @@ const getMyAllProjects = async (
     .populate('client', 'firstName lastName email profileImage')
     .populate(
       'engineers',
-      'firstName lastName email profileImage professionTitle',
+      'firstName lastName email profileImage professionTitle rate',
     )
     .populate({
       path: 'approvedEngineers.engineer',
-      select: 'firstName lastName email profileImage professionTitle',
+      select: 'firstName lastName email profileImage professionTitle rate',
     })
     .skip(skip)
     .limit(limit)

@@ -195,7 +195,7 @@ const alllavelRequest = async (params: any, options: IOption) => {
     .sort({ [sortBy]: sortOrder } as any)
     .skip(skip)
     .limit(limit)
-    .select('-password');
+    .select('-password').populate('badge');
 
   const total = await User.countDocuments({
     ...whereCondition,

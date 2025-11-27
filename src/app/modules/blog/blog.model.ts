@@ -8,7 +8,7 @@ const blogPostSchema = new mongoose.Schema<IBlog>(
     authorId: { type: String, required: true, ref: 'User' },
     featuredImage: { type: String },
     tags: [String],
-    published: { type: Boolean, default: false },
+    published: { type: Boolean, default: true },
   },
   { timestamps: true },
 );
