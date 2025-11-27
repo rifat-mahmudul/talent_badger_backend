@@ -25,4 +25,5 @@ export interface IProject {
   rejectedEngineers?: Types.ObjectId[];
   startDate?: Date;
   usedAmount?: number;
+  manager?:boolean
 }

@@ -699,6 +699,8 @@ const assasintManager = async (
   // Set manager
   approvedEngineer.isManager = true;
 
+  project.manager = true
+
   await project.save();
   return project;
 };

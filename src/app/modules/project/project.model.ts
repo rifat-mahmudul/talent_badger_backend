@@ -49,6 +49,7 @@ const projectSchema = new mongoose.Schema<IProject>(
     },
     lastUpdated: { type: Date, default: Date.now },
     usedAmount: { type: Number, default: 0 },
+    manager: { type: Boolean, default: false },
   },
   { timestamps: true },
 );
