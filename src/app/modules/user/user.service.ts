@@ -107,7 +107,7 @@ const deleteUserById = async (id: string) => {
 };
 
 const getMyProfile = async (id: string) => {
-  const result = await User.findById(id);
+  const result = await User.findById(id).populate('badge');
   if (!result) {
     throw new AppError(404, 'User not found');
   }
@@ -121,7 +121,7 @@ const updateMyProfile = async (
 ) => {
   if (files?.length) {
     const uploadResults = await Promise.all(
-      files.map((file) => fileUploader.uploadToCloudinary(file as any))
+      files.map((file) => fileUploader.uploadToCloudinary(file as any)),
     );
 
     const fileMap: Record<string, string> = {};
@@ -146,7 +146,6 @@ const updateMyProfile = async (
 
   return result;
 };
-
 
 // engineer stripe account create
 const createEngineerStripeAccount = async (userId: string) => {
