@@ -4,7 +4,9 @@ import sendResponse from '../../utils/sendResponse';
 import { authService } from './auth.service';
 
 const registerUser = catchAsync(async (req, res) => {
-  const result = await authService.registerUser(req.body);
+  const file = req.file as Express.Multer.File;
+  const fromData = req.body.data ? JSON.parse(req.body.data) : req.body;
+  const result = await authService.registerUser(fromData, file);
 
   sendResponse(res, {
     statusCode: 201,

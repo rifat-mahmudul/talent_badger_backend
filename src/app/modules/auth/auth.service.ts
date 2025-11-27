@@ -14,13 +14,22 @@ import createOtpTemplate from '../../utils/createOtpTemplate';
 import userRole from '../user/user.constan';
 import Service from '../service/service.model';
 import Industry from '../industri/industri.model';
+import { fileUploader } from '../../helper/fileUploder';
 
-const registerUser = async (payload: Partial<IUser>) => {
+const registerUser = async (
+  payload: Partial<IUser>,
+  file?: Express.Multer.File,
+) => {
   const exist = await User.findOne({ email: payload.email });
   if (exist) throw new AppError(400, 'User already exists');
 
-  const idx = Math.floor(Math.random() * 100);
-  payload.profileImage = `https://avatar.iran.liara.run/public/${idx}.png`;
+  if (file) {
+    const addProfileImage = await fileUploader.uploadToCloudinary(file);
+    payload.profileImage = addProfileImage.secure_url;
+  } else {
+    const idx = Math.floor(Math.random() * 100);
+    payload.profileImage = `https://avatar.iran.liara.run/public/${idx}.png`;
+  }
 
   if (payload.role === userRole.Engineer) {
     const requiredFields = [

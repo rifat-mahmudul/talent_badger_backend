@@ -14,6 +14,7 @@ import { badgeRouter } from '../modules/badge/badge.routes';
 import { paymentRouter } from '../modules/payment/payment.routes';
 import { assignHourRouter } from '../modules/assignHours/assignHours.routes';
 import { faqRouter } from '../modules/faq/faq.routes';
+import { lavelUpRouter } from '../modules/lavel/lavel.routes';
 
 const router = Router();
 
@@ -77,6 +78,10 @@ const moduleRoutes = [
   {
     path: '/faq',
     route: faqRouter,
+  },
+  {
+    path: '/lavel',
+    route: lavelUpRouter,
   },
 ];
 
