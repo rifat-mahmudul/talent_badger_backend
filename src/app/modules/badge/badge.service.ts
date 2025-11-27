@@ -1,7 +1,7 @@
 import AppError from '../../error/appError';
 import { fileUploader } from '../../helper/fileUploder';
 import pagination, { IOption } from '../../helper/pagenation';
-import userRole from '../user/user.constan';
+import '../user/user.constan';
 import User from '../user/user.model';
 import { IBadge } from './badge.interface';
 import Badge from './badge.model';
@@ -121,28 +121,32 @@ const requestBadgeLavel = async (userId: string, badgeId: string) => {
   const user = await User.findById(userId);
   if (!user) throw new AppError(404, 'User not found');
 
-  if (user.role !== userRole.Engineer) {
-    throw new AppError(400, 'You are not an engineer');
+  if (user.role !== 'engineer') {
+    throw new AppError(400, 'Only engineers can request a badge');
   }
 
-  if ((user.completedProjectsCount as number) < 1) {
-    throw new AppError(400, 'You have not completed 1 projects yet');
+  if (!user.completedProjectsCount || user.completedProjectsCount < 1) {
+    throw new AppError(400, 'You must complete at least 1 project');
+  }
+
+  if (user.badgeUpdateRequest) {
+    throw new AppError(400, 'You already have a pending request');
   }
 
   const badge = await Badge.findById(badgeId);
   if (!badge) throw new AppError(404, 'Badge not found');
 
-  // Mark request as pending
+  // ❗ ONLY request data update
   user.badgeUpdateRequest = true;
   user.badgeRequest = badge._id;
 
   await user.save();
+  // Ensure badge field NEVER changes here
+  user.badge = user.badge || null; // keep old value (if null stays null)
 
-  return {
-    message: 'Badge request submitted. Waiting for admin approval.',
-    user,
-    badge,
-  };
+  await user.save();
+
+  return user;
 };
 
 const alllavelRequest = async (params: any, options: IOption) => {
@@ -213,22 +217,19 @@ const approvedBadge = async (userId: string) => {
   if (!user) throw new AppError(404, 'User not found');
 
   if (!user.badgeRequest) {
-    throw new AppError(400, 'No badge request found');
+    throw new AppError(400, 'No pending badge request');
   }
 
-  // Approve the badge
-  user.badgeUpdateRequest = false;
+  // Approve badge
   user.badge = user.badgeRequest;
-  user.badgeRequest = undefined;
+  user.badgeRequest = null;
+  user.badgeUpdateRequest = false;
 
   await user.save();
 
-  const badge = await Badge.findById(user.badge);
+  // const badge = await Badge.findById(user.badge);
 
-  return {
-    badge,
-    user,
-  };
+  return user;
 };
 
 const getSingleRequestLavel = async (userId: string) => {
