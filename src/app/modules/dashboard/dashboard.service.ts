@@ -45,7 +45,7 @@ const userDashboardOverview = async (userId: string) => {
     $or: [
       { client: userId },
       { engineers: userId },
-      { approvedEngineers: userId },
+    { "approvedEngineers.engineer": userId },
     ],
   };
 

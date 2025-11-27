@@ -127,7 +127,7 @@ const getMyAllBookings = async (
     $or: [
       { client: userId },
       { engineers: userId },
-      { approvedEngineers: userId },
+      { "approvedEngineers.engineer": userId },
     ],
   }).select('_id');
 
@@ -245,7 +245,7 @@ const getUpcommingBooking = async (userId: string) => {
     $or: [
       { client: userId },
       { engineers: userId },
-      { approvedEngineers: userId },
+      { "approvedEngineers.engineer": userId },
     ],
   }).select('_id');
 
@@ -254,7 +254,7 @@ const getUpcommingBooking = async (userId: string) => {
   const bookings = await Booking.find({
     $or: [
       { userId: new mongoose.Types.ObjectId(userId) },
-      { projectId: { $in: projectIds } },          
+      { projectId: { $in: projectIds } },
     ],
     date: { $gte: now, $lte: nextWeek },
   })
