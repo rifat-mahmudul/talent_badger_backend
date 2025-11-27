@@ -46,6 +46,7 @@ export interface IUser {
   ratingCount?: number;
   ismanager?: boolean;
   badge?: Types.ObjectId;
+  badgeRequest?: Types.ObjectId | undefined;
   lavelUpdateRequest?: boolean;
   badgeUpdateRequest?: boolean;
   userstatus?: 'available' | 'not_available';

@@ -59,6 +59,7 @@ const userSchema = new mongoose.Schema<IUser>(
     avgRating: { type: Number, default: 0 },
     badgeUpdateRequest: { type: Boolean },
     badge: { type: mongoose.Schema.Types.ObjectId, ref: 'Badge' },
+    badgeRequest: { type: mongoose.Schema.Types.ObjectId, ref: 'Badge' },
 
     ismanager: { type: Boolean, default: false },
     userstatus: {

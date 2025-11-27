@@ -125,8 +125,8 @@ const requestBadgeLavel = async (userId: string, badgeId: string) => {
     throw new AppError(400, 'You are not an engineer');
   }
 
-  if ((user.completedProjectsCount as number) < 0) {
-    throw new AppError(400, 'You have not completed 2 projects yet');
+  if ((user.completedProjectsCount as number) < 1) {
+    throw new AppError(400, 'You have not completed 1 projects yet');
   }
 
   const badge = await Badge.findById(badgeId);
@@ -134,7 +134,7 @@ const requestBadgeLavel = async (userId: string, badgeId: string) => {
 
   // Mark request as pending
   user.badgeUpdateRequest = true;
-  user.badge = badge._id; // badge assign but not active until approved
+  user.badgeRequest = badge._id;
 
   await user.save();
 
@@ -212,12 +212,14 @@ const approvedBadge = async (userId: string) => {
   const user = await User.findById(userId);
   if (!user) throw new AppError(404, 'User not found');
 
-  if (!user.badge) {
+  if (!user.badgeRequest) {
     throw new AppError(400, 'No badge request found');
   }
 
   // Approve the badge
   user.badgeUpdateRequest = false;
+  user.badge = user.badgeRequest;
+  user.badgeRequest = undefined;
 
   await user.save();
 
