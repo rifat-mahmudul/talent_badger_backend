@@ -1,6 +1,7 @@
 import AppError from '../../error/appError';
 import { fileUploader } from '../../helper/fileUploder';
 import pagination, { IOption } from '../../helper/pagenation';
+import { newsletterService } from '../newsletter/newsletter.service';
 import User from '../user/user.model';
 import { IBlog } from './blog.interface';
 import Blog from './blog.model';
@@ -19,6 +20,11 @@ const createBlog = async (
     payload.featuredImage = filuploadBlog?.secure_url;
   }
   const result = await Blog.create({ ...payload, authorId: userId });
+
+  await newsletterService.broadcastNewsletter({
+    subject: result.title,
+    html: `<p>${result?.content}</p>`,
+  });
   return result;
 };
 
