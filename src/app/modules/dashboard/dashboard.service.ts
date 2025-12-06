@@ -64,10 +64,20 @@ const userDashboardOverview = async (userId: string) => {
     ...matchUser,
   });
 
+  // 🔥 NEW — Engineer upcoming meeting fix
+  const engineerProjects = await Project.find(matchUser).select('_id');
+  const projectIds = engineerProjects.map(p => p._id);
+
   const upcomingMeeting = await Booking.countDocuments({
-    userId,
+    projectId: { $in: projectIds },
     date: { $gte: new Date() },
   });
+
+  // const upcomingDeadlines = await Project.countDocuments({
+  //   deliveryDate: { $gte: new Date() },
+  //   ...matchUser,
+  // });
+
 
   const upcomingDeadlines = await Project.countDocuments({
     deliveryDate: { $gte: new Date() },
