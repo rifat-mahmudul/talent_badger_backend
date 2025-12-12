@@ -39,6 +39,7 @@ const registerUser = async (
       'industry',
       'service',
       'bio',
+
     ];
 
     for (const field of requiredFields) {
@@ -50,6 +51,7 @@ const registerUser = async (
       }
     }
   }
+  payload.status = "pending"
 
   const result = await User.create(payload);
 
@@ -78,7 +80,7 @@ const registerUser = async (
 };
 
 const loginUser = async (payload: Partial<IUser>) => {
-  const user = await User.findOne({ email: payload.email, status: 'active' });
+  const user = await User.findOne({ email: payload.email});
   if (!user) throw new AppError(401, 'User not found');
   if (!payload.password) throw new AppError(400, 'Password is required');
 
