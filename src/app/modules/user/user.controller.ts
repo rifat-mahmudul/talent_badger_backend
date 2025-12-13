@@ -16,6 +16,8 @@ const createUser = catchAsync(async (req, res) => {
 const getAllUser = catchAsync(async (req, res) => {
   const filters = pick(req.query, [
     'searchTerm',
+    'minPrice',
+    'maxPrice',
     'firstName',
     'lastName',
     'phone',
@@ -29,6 +31,9 @@ const getAllUser = catchAsync(async (req, res) => {
     'expertise',
     'companyName',
     'location',
+    'userstatus',
+    'minPrice',
+    'maxPrice',
   ]);
   const options = pick(req.query, ['page', 'limit', 'sortBy', 'sortOrder']);
   const result = await userService.getAllUser(filters, options);

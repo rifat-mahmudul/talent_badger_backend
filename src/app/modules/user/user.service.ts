@@ -22,7 +22,7 @@ const createUser = async (payload: IUser) => {
 
 const getAllUser = async (params: any, options: IOption) => {
   const { page, limit, skip, sortBy, sortOrder } = pagination(options);
-  const { searchTerm, ...filterData } = params;
+  const { searchTerm, minPrice, maxPrice, ...filterData } = params;
 
   const andCondition: any[] = [];
   const userSearchableFields = [
@@ -39,6 +39,7 @@ const getAllUser = async (params: any, options: IOption) => {
     'expertise',
     'companyName',
     'location',
+    'userstatus',
   ];
 
   if (searchTerm) {
@@ -54,6 +55,15 @@ const getAllUser = async (params: any, options: IOption) => {
       $and: Object.entries(filterData).map(([field, value]) => ({
         [field]: value,
       })),
+    });
+  }
+
+  if (minPrice !== undefined || maxPrice !== undefined) {
+    andCondition.push({
+      rate: {
+        ...(minPrice !== undefined && { $gte: Number(minPrice) }),
+        ...(maxPrice !== undefined && { $lte: Number(maxPrice) }),
+      },
     });
   }
 
