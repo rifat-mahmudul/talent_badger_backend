@@ -42,13 +42,13 @@ router.post('/', auth(userRole.User), paymentController.createCheckoutSession);
 
 router.get('/history', auth(userRole.User, userRole.Admin, userRole.Engineer), paymentController.getPaymentHistory);
 
-router.get('/:paymentId', auth(userRole.User, userRole.Admin), paymentController.getPaymentStatus);
+// router.get('/:paymentId', auth(userRole.User, userRole.Admin), paymentController.getPaymentStatus);
 
 // Manual distribution route (Admin only)
-router.post('/:paymentId/distribute', auth(userRole.Admin), paymentController.manualDistribution);
+// router.post('/:paymentId/distribute', auth(userRole.Admin), paymentController.manualDistribution);
 
 // Fix payment data route (Admin only)
-router.patch('/:paymentId/fix', auth(userRole.Admin), paymentController.fixPaymentData);
+// router.patch('/:paymentId/fix', auth(userRole.Admin), paymentController.fixPaymentData);
 
 // Webhook route (no auth needed - Stripe calls this)
 // router.post('/webhook', express.raw({type: 'application/json'}), paymentController.handleWebhook);
