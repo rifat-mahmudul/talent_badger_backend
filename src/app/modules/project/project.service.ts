@@ -210,6 +210,40 @@ const rejectProject = async (projectId: string, engineerId: string) => {
 /* ======================================================
    UPDATE PROGRESS
 ====================================================== */
+// const updateProgress = async (
+//   projectId: string,
+//   engineerId: string,
+//   progress: number,
+// ) => {
+//   const project = await Project.findById(projectId);
+//   if (!project) throw new AppError(404, 'Project not found');
+
+//   const eng = project.approvedEngineers?.find(
+//     (e: any) => e.engineer.toString() === engineerId,
+//   );
+
+//   if (!eng) throw new AppError(403, 'Not approved');
+
+//   eng.progress = Math.min(100, Math.max(0, progress));
+
+//   project.progress = Math.round(
+//     project.approvedEngineers!.reduce((s, e: any) => s + (e.progress || 0), 0) /
+//       project.approvedEngineers!.length,
+//   );
+
+//   if (project.approvedEngineers!.every((e: any) => e.progress === 100)) {
+//     project.status = 'completed';
+//     const client = await User.findById(project.client);
+//     if (client?.email) {
+//       sendMailer(client.email, 'Project Completed', project.title);
+//     }
+//   }
+
+//   await project.save();
+//   return project;
+// };
+
+
 const updateProgress = async (
   projectId: string,
   engineerId: string,
@@ -218,26 +252,46 @@ const updateProgress = async (
   const project = await Project.findById(projectId);
   if (!project) throw new AppError(404, 'Project not found');
 
-  const eng = project.approvedEngineers?.find(
+  if (!project.approvedEngineers || project.approvedEngineers.length === 0) {
+    throw new AppError(400, 'No approved engineers');
+  }
+
+  const eng = project.approvedEngineers.find(
     (e: any) => e.engineer.toString() === engineerId,
   );
 
-  if (!eng) throw new AppError(403, 'Not approved');
+  if (!eng) throw new AppError(403, 'Engineer not approved');
 
-  eng.progress = Math.min(100, Math.max(0, progress));
+  // clamp 0–100
+  eng.progress = Math.max(0, Math.min(100, progress));
 
-  project.progress = Math.round(
-    project.approvedEngineers!.reduce((s, e: any) => s + (e.progress || 0), 0) /
-      project.approvedEngineers!.length,
+  // 🔥 recalculate project progress (AVERAGE)
+  const totalProgress = project.approvedEngineers.reduce(
+    (sum: number, e: any) => sum + (e.progress || 0),
+    0,
   );
 
-  if (project.approvedEngineers!.every((e: any) => e.progress === 100)) {
+  project.progress = Math.round(
+    totalProgress / project.approvedEngineers.length,
+  );
+
+  // ✅ if all engineers completed
+  const allCompleted = project.approvedEngineers.every(
+    (e: any) => e.progress === 100,
+  );
+
+  if (allCompleted) {
     project.status = 'completed';
-    const client = await User.findById(project.client);
+
+    const client = await User.findById(project.client).select('email');
     if (client?.email) {
       sendMailer(client.email, 'Project Completed', project.title);
     }
+  } else {
+    project.status = 'in_progress';
   }
+
+  project.lastUpdated = new Date();
 
   await project.save();
   return project;
