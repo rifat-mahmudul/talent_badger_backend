@@ -791,8 +791,6 @@
 //   deleteMyProjectEngineer,
 // };
 
-
-
 import { IProject } from './project.interface';
 import AppError from '../../error/appError';
 import User from '../user/user.model';
@@ -801,6 +799,7 @@ import pagination, { IOption } from '../../helper/pagenation';
 import { fileUploader } from '../../helper/fileUploder';
 import sendMailer from '../../helper/sendMailer';
 import Booking from '../booking/booking.model';
+import mongoose, { Schema, Types } from 'mongoose';
 
 /* ======================================================
    CREATE PROJECT
@@ -822,8 +821,7 @@ const createProject = async (
   // Upload NDA
   if (file) {
     const upload = await fileUploader.uploadToCloudinary(file);
-    if (!upload?.secure_url)
-      throw new AppError(400, 'Failed to upload NDA');
+    if (!upload?.secure_url) throw new AppError(400, 'Failed to upload NDA');
     payload.ndaAgreement = [upload.secure_url];
   }
 
@@ -880,7 +878,9 @@ const getMyAllProjects = async (
   }
 
   if (Object.keys(filters).length) {
-    andCondition.push({ $and: Object.entries(filters).map(([k, v]) => ({ [k]: v })) });
+    andCondition.push({
+      $and: Object.entries(filters).map(([k, v]) => ({ [k]: v })),
+    });
   }
 
   const where = andCondition.length ? { $and: andCondition } : {};
@@ -956,7 +956,6 @@ const getMyAllProjects = async (
 //   return project;
 // };
 
-
 const approveProject = async (projectId: string, engineerId: string) => {
   const project = await Project.findById(projectId);
   if (!project) throw new AppError(404, 'Project not found');
@@ -966,16 +965,14 @@ const approveProject = async (projectId: string, engineerId: string) => {
     (e: any) => e.engineer.toString() === engineerId,
   );
 
-  if (!assigned)
-    throw new AppError(403, 'Engineer not assigned');
+  if (!assigned) throw new AppError(403, 'Engineer not assigned');
 
   // prevent duplicate approval
   const alreadyApproved = project.approvedEngineers?.some(
     (e: any) => e.engineer.toString() === engineerId,
   );
 
-  if (alreadyApproved)
-    throw new AppError(400, 'Engineer already approved');
+  if (alreadyApproved) throw new AppError(400, 'Engineer already approved');
 
   // get engineer rate
   const engineer = await User.findById(engineerId).select('rate');
@@ -1013,7 +1010,6 @@ const approveProject = async (projectId: string, engineerId: string) => {
   await project.save();
   return project;
 };
-
 
 /* ======================================================
    REJECT PROJECT
@@ -1076,6 +1072,35 @@ const updateProgress = async (
 /* ======================================================
    ADD PROJECT ENGINEERS
 ====================================================== */
+// const addMyProjectEngineer = async (
+//   projectId: string,
+//   userId: string,
+//   engineers: { engineer: string; allocatedHours: number }[],
+// ) => {
+//   const project = await Project.findById(projectId);
+//   if (!project) throw new AppError(404, 'Project not found');
+
+//   if (project.client.toString() !== userId)
+//     throw new AppError(403, 'Unauthorized');
+
+//   const existing = project.engineers.map(
+//     (e: any) => e.engineer.toString(),
+//   );
+
+//   const newOnes = engineers.filter(
+//     (e) => !existing.includes(e.engineer),
+//   );
+
+//   if (!newOnes.length)
+//     throw new AppError(400, 'Engineers already added');
+
+//   await Project.findByIdAndUpdate(projectId, {
+//     $push: { engineers: { $each: newOnes } },
+//   });
+
+//   return Project.findById(projectId);
+// };
+
 const addMyProjectEngineer = async (
   projectId: string,
   userId: string,
@@ -1087,22 +1112,58 @@ const addMyProjectEngineer = async (
   if (project.client.toString() !== userId)
     throw new AppError(403, 'Unauthorized');
 
-  const existing = project.engineers.map(
-    (e: any) => e.engineer.toString(),
+  const pendingIds = project.engineers.map((e: any) => e.engineer.toString());
+
+  if (!project.approvedEngineers) project.approvedEngineers = [];
+  const approvedIds = project.approvedEngineers.map((e: any) =>
+    e.engineer.toString(),
   );
 
-  const newOnes = engineers.filter(
-    (e) => !existing.includes(e.engineer),
+  const newEngineers = engineers.filter(
+    (e) =>
+      !pendingIds.includes(e.engineer) && !approvedIds.includes(e.engineer),
   );
 
-  if (!newOnes.length)
-    throw new AppError(400, 'Engineers already added');
+  if (!newEngineers.length) throw new AppError(400, 'Engineers already added');
 
-  await Project.findByIdAndUpdate(projectId, {
-    $push: { engineers: { $each: newOnes } },
+  // fetch engineers with rate
+  const engineerDocs = await User.find({
+    _id: { $in: newEngineers.map((e) => e.engineer) },
+    role: 'engineer',
+  }).select('_id rate');
+
+  if (engineerDocs.length !== newEngineers.length)
+    throw new AppError(400, 'Invalid engineer');
+
+  let totalRequiredAmount = 0;
+
+  newEngineers.forEach((e) => {
+    if (e.allocatedHours <= 0)
+      throw new AppError(400, 'Allocated hours must be > 0');
+
+    const engineer = engineerDocs.find((u) => u._id.toString() === e.engineer);
+
+    const rate = engineer?.rate || 0;
+    totalRequiredAmount += rate * e.allocatedHours;
   });
 
-  return Project.findById(projectId);
+  const remainingBudget =
+    (project.totalPaid || 0) - (project.approvedEngineersTotalAmount || 0);
+
+  if (totalRequiredAmount > remainingBudget) {
+    throw new AppError(400, 'Insufficient budget to add engineer(s)');
+  }
+
+  // add engineers (pending) - convert string IDs to ObjectId
+  const newEngineersWithObjectId = newEngineers.map((e) => ({
+    engineer: new mongoose.Types.ObjectId(e.engineer),
+    allocatedHours: e.allocatedHours,
+  }));
+
+  project.engineers.push(...newEngineersWithObjectId);
+
+  await project.save();
+  return project;
 };
 
 /* ======================================================
@@ -1204,7 +1265,6 @@ const deleteProject = async (projectId: string, userId: string) => {
 //   return { project, booking };
 // };
 
-
 export const projectService = {
   createProject,
   getMyAllProjects,
@@ -1215,6 +1275,5 @@ export const projectService = {
   deleteMyProjectEngineer,
   singleProject,
   updateMyProject,
-  deleteProject
+  deleteProject,
 };
-
