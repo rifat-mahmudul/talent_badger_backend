@@ -76,6 +76,7 @@ const projectSchema = new mongoose.Schema<IProject>(
     usedAmount: { type: Number, default: 0 },
     manager: { type: Boolean, default: false },
     approvedEngineersTotalAmount: { type: Number, default: 0 },
+    isPaymentDistributed: { type: Boolean, default: false },
   },
   { timestamps: true },
 );

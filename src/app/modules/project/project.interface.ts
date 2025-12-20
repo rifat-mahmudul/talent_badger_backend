@@ -47,4 +47,5 @@ export interface IProject {
 
   manager?: boolean;
   approvedEngineersTotalAmount: number;
+  isPaymentDistributed?: boolean;
 }
