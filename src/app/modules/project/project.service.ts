@@ -922,10 +922,46 @@ const getMyAllProjects = async (
 /* ======================================================
    APPROVE PROJECT
 ====================================================== */
+// const approveProject = async (projectId: string, engineerId: string) => {
+//   const project = await Project.findById(projectId);
+//   if (!project) throw new AppError(404, 'Project not found');
+
+//   const assigned = project.engineers.find(
+//     (e: any) => e.engineer.toString() === engineerId,
+//   );
+
+//   if (!assigned)
+//     throw new AppError(403, 'Engineer not assigned');
+
+//   if (!project.approvedEngineers) project.approvedEngineers = [];
+
+//   project.approvedEngineers.push({
+//     engineer: assigned.engineer,
+//     allocatedHours: assigned.allocatedHours,
+//     usedHours: 0,
+//     status: 'approved',
+//     isManager: false,
+//     progress: 0,
+//   });
+
+//   project.engineers = project.engineers.filter(
+//     (e: any) => e.engineer.toString() !== engineerId,
+//   );
+
+//   if (project.engineers.length === 0) {
+//     project.status = 'in_progress';
+//   }
+
+//   await project.save();
+//   return project;
+// };
+
+
 const approveProject = async (projectId: string, engineerId: string) => {
   const project = await Project.findById(projectId);
   if (!project) throw new AppError(404, 'Project not found');
 
+  // check engineer exists in pending engineers
   const assigned = project.engineers.find(
     (e: any) => e.engineer.toString() === engineerId,
   );
@@ -933,8 +969,23 @@ const approveProject = async (projectId: string, engineerId: string) => {
   if (!assigned)
     throw new AppError(403, 'Engineer not assigned');
 
-  if (!project.approvedEngineers) project.approvedEngineers = [];
+  // prevent duplicate approval
+  const alreadyApproved = project.approvedEngineers?.some(
+    (e: any) => e.engineer.toString() === engineerId,
+  );
 
+  if (alreadyApproved)
+    throw new AppError(400, 'Engineer already approved');
+
+  // get engineer rate
+  const engineer = await User.findById(engineerId).select('rate');
+  if (!engineer) throw new AppError(404, 'Engineer not found');
+
+  const engineerRate = engineer.rate || 0;
+  const engineerAmount = assigned.allocatedHours * engineerRate;
+
+  // push approved engineer
+  if (!project.approvedEngineers) project.approvedEngineers = [];
   project.approvedEngineers.push({
     engineer: assigned.engineer,
     allocatedHours: assigned.allocatedHours,
@@ -944,17 +995,25 @@ const approveProject = async (projectId: string, engineerId: string) => {
     progress: 0,
   });
 
+  // update total approved amount
+  project.approvedEngineersTotalAmount =
+    (project.approvedEngineersTotalAmount || 0) + engineerAmount;
+
+  // remove from pending engineers
   project.engineers = project.engineers.filter(
     (e: any) => e.engineer.toString() !== engineerId,
   );
 
+  // update project status
   if (project.engineers.length === 0) {
     project.status = 'in_progress';
+    project.startDate = new Date();
   }
 
   await project.save();
   return project;
 };
+
 
 /* ======================================================
    REJECT PROJECT

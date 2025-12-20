@@ -76,4 +76,5 @@ export interface IProject {
   usedAmount?: number;
 
   manager?: boolean;
+  approvedEngineersTotalAmount: number;
 }
