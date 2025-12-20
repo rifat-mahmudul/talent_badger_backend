@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import Stripe from 'stripe';
 import config from '../../config';
 import Payment from './payment.model';
