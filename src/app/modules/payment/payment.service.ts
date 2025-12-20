@@ -153,7 +153,7 @@ const createCheckoutSession = async (projectId: string, clientId: string) => {
     metadata: {
       projectId,
       clientId,
-      platformFee: (project.totalPaid * 0.1).toString(),
+      platformFee: (project.approvedEngineersTotalAmount * 0.1).toString(),
       adminFee: adminFeeFromEngineerBudget.toString(),
       engineerPool: engineerPool.toString(),
     },
@@ -296,10 +296,9 @@ const distributeFunds = async (paymentId: string) => {
   if (transfers.length > 0) {
     payment.status = 'distributed';
 
-    
+    project.status = 'completed';
     project.isPaymentDistributed = true;
     await project.save();
-
 
     console.log(
       'Payment distributed successfully. Transfers:',
