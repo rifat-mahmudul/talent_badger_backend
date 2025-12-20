@@ -316,10 +316,10 @@ const distributeFunds = async (paymentId: string) => {
   // প্রকল্প স্ট্যাটাস আপডেট
   try {
     await Project.findByIdAndUpdate(payment.projectId, {
-      status: 'in_progress',
+      status: 'completed',
       startDate: new Date(),
     });
-    console.log('Project status updated to in_progress');
+    console.log('Project status updated to completed');
   } catch (error) {
     console.error('Failed to update project status:', error);
   }
