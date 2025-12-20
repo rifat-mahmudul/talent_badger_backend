@@ -9,7 +9,12 @@ import { paymentController } from './app/modules/payment/payment.controller';
 const app = express();
 
 // Middlewares
-app.use(cors({ origin: '*', credentials: true }));
+app.use(
+  cors({
+    origin: ['https://talentbadger.com', 'https://admin.talentbadger.com'],
+    credentials: true,
+  }),
+);
 app.use(cookieParser());
 app.post(
   '/webhook',
