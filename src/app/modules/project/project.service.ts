@@ -6,7 +6,7 @@ import pagination, { IOption } from '../../helper/pagenation';
 import { fileUploader } from '../../helper/fileUploder';
 import sendMailer from '../../helper/sendMailer';
 import Booking from '../booking/booking.model';
-import mongoose, { Schema, Types } from 'mongoose';
+import mongoose from 'mongoose';
 
 /* ======================================================
    CREATE PROJECT
