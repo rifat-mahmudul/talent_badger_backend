@@ -114,7 +114,7 @@ const createCheckoutSession = async (projectId: string, clientId: string) => {
 
   if (!hasValid) throw new AppError(400, 'Invalid engineer hour or rate');
 
-  const amountInCents = Math.round(project.totalPaid * 100);
+  const amountInCents = Math.round(project.approvedEngineersTotalAmount * 100);
 
   // Admin fee (totalPaid এর 10%) - এটা Platform fee
   const platformFeeCents = Math.floor(amountInCents * 0.1);
@@ -134,7 +134,7 @@ const createCheckoutSession = async (projectId: string, clientId: string) => {
           unit_amount: amountInCents,
           product_data: {
             name: `Payment for ${project.title}`,
-            description: `Total: $${project.totalPaid}`,
+            description: `Total: $${project.approvedEngineersTotalAmount}`,
           },
         },
         quantity: 1,
@@ -153,7 +153,7 @@ const createCheckoutSession = async (projectId: string, clientId: string) => {
     metadata: {
       projectId,
       clientId,
-      platformFee: (project.approvedEngineersTotalAmount * 0.1).toString(),
+      platformFee: (project.totalPaid * 0.1).toString(),
       adminFee: adminFeeFromEngineerBudget.toString(),
       engineerPool: engineerPool.toString(),
     },
@@ -296,7 +296,7 @@ const distributeFunds = async (paymentId: string) => {
   if (transfers.length > 0) {
     payment.status = 'distributed';
 
-    project.status = 'completed';
+    // project.status = 'completed';
     project.isPaymentDistributed = true;
     await project.save();
 
