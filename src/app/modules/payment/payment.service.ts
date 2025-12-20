@@ -192,7 +192,11 @@ const createCheckoutSession = async (projectId: string, clientId: string) => {
 const distributeFunds = async (paymentId: string) => {
   const payment = await Payment.findById(paymentId);
 
+  // if (!payment) throw new AppError(404, 'Payment not found');
+
   if (!payment) throw new AppError(404, 'Payment not found');
+  const project = await Project.findById(payment.projectId);
+  if (!project) throw new AppError(404, 'Project not found');
   if (payment.status !== 'paid') throw new AppError(400, 'Payment not paid');
 
   console.log('Starting fund distribution for payment:', paymentId);
@@ -291,6 +295,12 @@ const distributeFunds = async (paymentId: string) => {
 
   if (transfers.length > 0) {
     payment.status = 'distributed';
+
+    
+    project.isPaymentDistributed = true;
+    await project.save();
+
+
     console.log(
       'Payment distributed successfully. Transfers:',
       transfers.length,
