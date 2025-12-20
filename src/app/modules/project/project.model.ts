@@ -11,7 +11,6 @@ const projectSchema = new mongoose.Schema<IProject>(
       required: true,
     },
     engineers: [
-      // { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
       {
         engineer: {
           type: mongoose.Schema.Types.ObjectId,
@@ -24,23 +23,7 @@ const projectSchema = new mongoose.Schema<IProject>(
         },
       },
     ],
-    // approvedEngineers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     approvedEngineers: [
-      // {
-      //   engineer: {
-      //     type: mongoose.Schema.Types.ObjectId,
-      //     ref: 'User',
-      //     required: true,
-      //   },
-      //   status: {
-      //     type: String,
-      //     enum: ['pending', 'approved', 'rejected'],
-      //     default: 'pending',
-      //   },
-      //   isManager: { type: Boolean, default: false },
-      //   progress: Number,
-      // },
-
       {
         engineer: {
           type: mongoose.Schema.Types.ObjectId,
