@@ -95,6 +95,77 @@ const getAllBookings = async (params: any, options: IOption) => {
   };
 };
 
+// const getMyAllBookings = async (
+//   userId: string,
+//   params: any,
+//   options: IOption,
+// ) => {
+//   const { page, limit, skip, sortBy, sortOrder } = pagination(options);
+//   const { searchTerm, ...filterData } = params;
+
+//   const andConditions: any[] = [];
+
+//   const searchableFields = ['link'];
+
+//   if (searchTerm) {
+//     andConditions.push({
+//       $or: searchableFields.map((field) => ({
+//         [field]: { $regex: searchTerm, $options: 'i' },
+//       })),
+//     });
+//   }
+
+//   if (Object.keys(filterData).length > 0) {
+//     andConditions.push({
+//       $and: Object.entries(filterData).map(([field, value]) => ({
+//         [field]: value,
+//       })),
+//     });
+//   }
+
+//   const relatedProjects = await Project.find({
+//     $or: [
+//       { client: userId },
+//       { engineers: userId },
+//       { "approvedEngineers.engineer": userId },
+//     ],
+//   }).select('_id');
+
+//   const projectIds = relatedProjects.map((p) => p._id);
+
+//   andConditions.push({
+//     $or: [
+//       { userId: new mongoose.Types.ObjectId(userId) },
+//       { projectId: { $in: projectIds } },
+//     ],
+//   });
+
+//   const whereCondition =
+//     andConditions.length > 0 ? { $and: andConditions } : {};
+
+//   const bookings = await Booking.find(whereCondition)
+//     .sort({ [sortBy]: sortOrder } as any)
+//     .skip(skip)
+//     .limit(limit)
+//     .populate({
+//       path: 'projectId',
+//       populate: [
+//         { path: 'client', select: 'firstName lastName email' },
+//         { path: 'engineers', select: 'firstName lastName email' },
+//         { path: 'approvedEngineers', select: 'firstName lastName email' },
+//       ],
+//     })
+//     .populate('userId', 'firstName lastName email');
+
+//   const total = await Booking.countDocuments(whereCondition);
+
+//   return {
+//     meta: { page, limit, total },
+//     data: bookings,
+//   };
+// };
+
+
 const getMyAllBookings = async (
   userId: string,
   params: any,
@@ -105,34 +176,34 @@ const getMyAllBookings = async (
 
   const andConditions: any[] = [];
 
-  const searchableFields = ['link'];
-
+  // Search
   if (searchTerm) {
     andConditions.push({
-      $or: searchableFields.map((field) => ({
-        [field]: { $regex: searchTerm, $options: 'i' },
-      })),
+      link: { $regex: searchTerm, $options: 'i' },
     });
   }
 
+  //  Filter
   if (Object.keys(filterData).length > 0) {
-    andConditions.push({
-      $and: Object.entries(filterData).map(([field, value]) => ({
+    andConditions.push(
+      ...Object.entries(filterData).map(([field, value]) => ({
         [field]: value,
       })),
-    });
+    );
   }
 
+  //  FIXED project matching
   const relatedProjects = await Project.find({
     $or: [
       { client: userId },
-      { engineers: userId },
-      { "approvedEngineers.engineer": userId },
+      { 'engineers.engineer': userId },
+      { 'approvedEngineers.engineer': userId },
     ],
   }).select('_id');
 
   const projectIds = relatedProjects.map((p) => p._id);
 
+  //  User OR Project bookings
   andConditions.push({
     $or: [
       { userId: new mongoose.Types.ObjectId(userId) },
@@ -141,7 +212,7 @@ const getMyAllBookings = async (
   });
 
   const whereCondition =
-    andConditions.length > 0 ? { $and: andConditions } : {};
+    andConditions.length ? { $and: andConditions } : {};
 
   const bookings = await Booking.find(whereCondition)
     .sort({ [sortBy]: sortOrder } as any)
@@ -151,8 +222,14 @@ const getMyAllBookings = async (
       path: 'projectId',
       populate: [
         { path: 'client', select: 'firstName lastName email' },
-        { path: 'engineers', select: 'firstName lastName email' },
-        { path: 'approvedEngineers', select: 'firstName lastName email' },
+        {
+          path: 'engineers.engineer',
+          select: 'firstName lastName email',
+        },
+        {
+          path: 'approvedEngineers.engineer',
+          select: 'firstName lastName email',
+        },
       ],
     })
     .populate('userId', 'firstName lastName email');
@@ -164,6 +241,7 @@ const getMyAllBookings = async (
     data: bookings,
   };
 };
+
 
 const getSingleBooking = async (userId: string, bookingId: string) => {
   const booking = await Booking.findById(bookingId)
@@ -235,22 +313,59 @@ const deleteBooking = async (userId: string, bookingId: string) => {
   return { message: 'Booking deleted successfully' };
 };
 
+// const getUpcommingBooking = async (userId: string) => {
+//   const now = new Date();
+//   const nextWeek = new Date();
+//   nextWeek.setDate(now.getDate() + 7);
+
+//   // 🔹 যেসব প্রজেক্টে user আছে
+//   const relatedProjects = await Project.find({
+//     $or: [
+//       { client: userId },
+//       { engineers: userId },
+//       { "approvedEngineers.engineer": userId },
+//     ],
+//   }).select('_id');
+
+//   const projectIds = relatedProjects.map((p) => p._id);
+
+//   const bookings = await Booking.find({
+//     $or: [
+//       { userId: new mongoose.Types.ObjectId(userId) },
+//       { projectId: { $in: projectIds } },
+//     ],
+//     date: { $gte: now, $lte: nextWeek },
+//   })
+//     .sort({ date: 1 })
+//     .populate({
+//       path: 'projectId',
+//       populate: [
+//         { path: 'client', select: 'firstName lastName email' },
+//         { path: 'engineers', select: 'firstName lastName email' },
+//         { path: 'approvedEngineers', select: 'firstName lastName email' },
+//       ],
+//     })
+//     .populate('userId', 'firstName lastName email');
+
+//   return bookings;
+// };
 const getUpcommingBooking = async (userId: string) => {
   const now = new Date();
   const nextWeek = new Date();
   nextWeek.setDate(now.getDate() + 7);
 
-  // 🔹 যেসব প্রজেক্টে user আছে
+  // ✅ FIXED: related projects query
   const relatedProjects = await Project.find({
     $or: [
       { client: userId },
-      { engineers: userId },
-      { "approvedEngineers.engineer": userId },
+      { 'engineers.engineer': userId },
+      { 'approvedEngineers.engineer': userId },
     ],
   }).select('_id');
 
   const projectIds = relatedProjects.map((p) => p._id);
 
+  // ✅ Upcoming bookings
   const bookings = await Booking.find({
     $or: [
       { userId: new mongoose.Types.ObjectId(userId) },
@@ -263,8 +378,14 @@ const getUpcommingBooking = async (userId: string) => {
       path: 'projectId',
       populate: [
         { path: 'client', select: 'firstName lastName email' },
-        { path: 'engineers', select: 'firstName lastName email' },
-        { path: 'approvedEngineers', select: 'firstName lastName email' },
+        {
+          path: 'engineers.engineer',
+          select: 'firstName lastName email',
+        },
+        {
+          path: 'approvedEngineers.engineer',
+          select: 'firstName lastName email',
+        },
       ],
     })
     .populate('userId', 'firstName lastName email');
