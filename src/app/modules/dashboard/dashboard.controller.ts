@@ -21,6 +21,15 @@ const userDashboardOverview = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const engineerDashboardOverview = catchAsync(async (req, res) => {
+  const result = await dashboardService.engineerDashboardOverview(req.user.id);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'User dashboard overview',
+    data: result,
+  });
+});
 
 const getMonthlyEarnings = catchAsync(async (req, res) => {
   const { year } = req.query;
@@ -38,4 +47,5 @@ export const dashboardController = {
   dashboardOverView,
   userDashboardOverview,
   getMonthlyEarnings,
+  engineerDashboardOverview
 };

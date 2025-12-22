@@ -14,6 +14,11 @@ router.get(
   auth(userRole.User, userRole.Engineer),
   dashboardController.userDashboardOverview,
 );
+router.get(
+  '/engineerOverview',
+  auth(userRole.User, userRole.Engineer),
+  dashboardController.engineerDashboardOverview,
+);
 
 router.get(
   '/monthly-earnings',

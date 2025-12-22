@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Booking from '../booking/booking.model';
 import paymentModel from '../payment/payment.model';
 import Project from '../project/project.model';
@@ -41,20 +42,15 @@ const dashboardOverView = async () => {
 };
 
 const userDashboardOverview = async (userId: string) => {
-  const matchUser = {
-    $or: [
-      { client: userId },
-      { engineers: userId },
-    { "approvedEngineers.engineer": userId },
-    ],
-  };
+  // Only projects created by this user
+  const matchUser = { client: userId };
 
   const totalActiveProject = await Project.countDocuments({
     status: 'in_progress',
     ...matchUser,
   });
 
-  const totalPandingProject = await Project.countDocuments({
+  const totalPendingProject = await Project.countDocuments({
     status: 'pending',
     ...matchUser,
   });
@@ -64,32 +60,101 @@ const userDashboardOverview = async (userId: string) => {
     ...matchUser,
   });
 
-  // 🔥 NEW — Engineer upcoming meeting fix
-  const engineerProjects = await Project.find(matchUser).select('_id');
-  const projectIds = engineerProjects.map(p => p._id);
+  // User's project IDs
+  const userProjects = await Project.find(matchUser).select('_id');
+  const projectIds = userProjects.map(p => p._id);
 
+  // Upcoming meetings for user's projects
   const upcomingMeeting = await Booking.countDocuments({
     projectId: { $in: projectIds },
     date: { $gte: new Date() },
   });
 
-  // const upcomingDeadlines = await Project.countDocuments({
-  //   deliveryDate: { $gte: new Date() },
-  //   ...matchUser,
-  // });
-
-
+  // Upcoming deadlines for user's projects
   const upcomingDeadlines = await Project.countDocuments({
+    _id: { $in: projectIds },
     deliveryDate: { $gte: new Date() },
-    ...matchUser,
   });
 
   return {
     totalActiveProject,
-    totalPandingProject,
+    totalPendingProject,
     totalCompletedProject,
     upcomingMeeting,
     upcomingDeadlines,
+  };
+};
+
+
+const engineerDashboardOverview = async (engineerId: string) => {
+  const matchEngineer = {
+    $or: [
+      { "engineers.engineer": new mongoose.Types.ObjectId(engineerId) },
+      { "approvedEngineers.engineer": new mongoose.Types.ObjectId(engineerId) },
+    ],
+  };
+
+  // Project counts
+  const totalActiveProject = await Project.countDocuments({
+    status: 'in_progress',
+    ...matchEngineer,
+  });
+
+  const totalPendingProject = await Project.countDocuments({
+    status: 'pending',
+    ...matchEngineer,
+  });
+
+  const totalCompletedProject = await Project.countDocuments({
+    status: 'completed',
+    ...matchEngineer,
+  });
+
+  // Engineer project IDs
+  const engineerProjects = await Project.find(matchEngineer).select('_id');
+  const projectIds = engineerProjects.map(p => p._id);
+
+  // Upcoming meetings
+  const upcomingMeeting = await Booking.countDocuments({
+    projectId: { $in: projectIds },
+    date: { $gte: new Date() },
+  });
+
+  // Upcoming deadlines
+  const upcomingDeadlines = await Project.countDocuments({
+    _id: { $in: projectIds },
+    deliveryDate: { $gte: new Date() },
+  });
+
+  // Payments — total earned & pending
+  const payments = await paymentModel.aggregate([
+    { $match: { "approvedEngineers.engineer": new mongoose.Types.ObjectId(engineerId) } },
+    { $unwind: "$approvedEngineers" },
+    { $match: { "approvedEngineers.engineer": new mongoose.Types.ObjectId(engineerId) } },
+    {
+      $group: {
+        _id: "$approvedEngineers.engineer",
+        totalEarned: { $sum: "$approvedEngineers.scaledProjectFee" },
+        pendingPayments: {
+          $sum: {
+            $cond: [{ $eq: ["$status", "paid"] }, 0, "$approvedEngineers.scaledProjectFee"],
+          },
+        },
+      },
+    },
+  ]);
+
+  const totalEarned = payments[0]?.totalEarned || 0;
+  // const pendingPayments = payments[0]?.pendingPayments || 0;
+
+  return {
+    totalActiveProject,
+    totalPendingProject,
+    totalCompletedProject,
+    upcomingMeeting,
+    upcomingDeadlines,
+    totalEarned,
+    // pendingPayments,
   };
 };
 
@@ -136,5 +201,6 @@ const getMonthlyEarnings = async (year: number) => {
 export const dashboardService = {
   dashboardOverView,
   userDashboardOverview,
-  getMonthlyEarnings
+  getMonthlyEarnings,
+  engineerDashboardOverview
 };
