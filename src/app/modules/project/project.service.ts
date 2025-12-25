@@ -243,7 +243,6 @@ const rejectProject = async (projectId: string, engineerId: string) => {
 //   return project;
 // };
 
-
 const updateProgress = async (
   projectId: string,
   engineerId: string,
@@ -379,9 +378,23 @@ const deleteMyProjectEngineer = async (
   if (project.client.toString() !== userId)
     throw new AppError(403, 'Unauthorized');
 
-  await Project.findByIdAndUpdate(projectId, {
-    $pull: { engineers: { engineer: engineerId } },
-  });
+  // await Project.findByIdAndUpdate(projectId, {
+  //   $pull: { engineers: { engineer: engineerId } },
+  // });
+
+  await Project.findByIdAndUpdate(
+    projectId,
+    {
+      $pull: {
+        engineers: { engineer: engineerId },
+        approvedEngineers: { engineer: engineerId },
+      },
+      $set: {
+        lastUpdated: new Date(),
+      },
+    },
+    { new: true },
+  );
 
   return Project.findById(projectId);
 };
