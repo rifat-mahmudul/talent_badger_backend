@@ -390,7 +390,6 @@ const deleteMyProjectEngineer = async (
   userId: string,
   engineerId: string,
 ) => {
-  // Validate ObjectIds
   if (
     !mongoose.Types.ObjectId.isValid(projectId) ||
     !mongoose.Types.ObjectId.isValid(engineerId)
@@ -398,7 +397,6 @@ const deleteMyProjectEngineer = async (
     throw new AppError(400, 'Invalid project or engineer id');
   }
 
-  // Find project & authorize
   const project = await Project.findById(projectId);
   if (!project) throw new AppError(404, 'Project not found');
 
@@ -406,27 +404,22 @@ const deleteMyProjectEngineer = async (
     throw new AppError(403, 'Unauthorized');
   }
 
-  // Pull engineer from BOTH arrays
   const updatedProject = await Project.findByIdAndUpdate(
     projectId,
     {
       $pull: {
-        engineers: { engineer: engineerId },
-        // approvedEngineers: { engineer: engineerId },
+        engineers: {
+          engineer: new mongoose.Types.ObjectId(engineerId),
+        },
       },
-      $set: {
-        lastUpdated: new Date(),
-      },
+      $set: { lastUpdated: new Date() },
     },
     { new: true },
   );
 
-  if (!updatedProject) {
-    throw new AppError(404, 'Project not found after update');
-  }
-
   return updatedProject;
 };
+
 
 /* ======================================================
    SINGLE PROJECT

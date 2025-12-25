@@ -215,10 +215,31 @@ const addMyProjectEngineer = catchAsync(async (req: Request, res: Response) => {
 /* ======================================================
    DELETE PROJECT ENGINEER
 ====================================================== */
+// const deleteMyProjectEngineer = catchAsync(
+//   async (req: Request, res: Response) => {
+//     const { projectId } = req.params;
+//     const { engineerId } = req.body;
+//     const userId = req.user.id;
+
+//     const result = await projectService.deleteMyProjectEngineer(
+//       projectId,
+//       userId,
+//       engineerId,
+//     );
+
+//     sendResponse(res, {
+//       statusCode: 200,
+//       success: true,
+//       message: 'Engineer removed successfully',
+//       data: result,
+//     });
+//   },
+// );
+
+
 const deleteMyProjectEngineer = catchAsync(
   async (req: Request, res: Response) => {
-    const { projectId } = req.params;
-    const { engineerId } = req.body;
+    const { projectId, engineerId } = req.params;
     const userId = req.user.id;
 
     const result = await projectService.deleteMyProjectEngineer(
@@ -235,6 +256,7 @@ const deleteMyProjectEngineer = catchAsync(
     });
   },
 );
+
 
 /* ======================================================
    EXPORT

@@ -68,11 +68,18 @@ router.put(
   auth(userRole.User),
   projectController.addMyProjectEngineer,
 );
+// router.delete(
+//   '/:projectId/engineer',
+//   auth(userRole.User),
+//   projectController.deleteMyProjectEngineer,
+// );
+
 router.delete(
-  '/:projectId/engineer',
+  '/:projectId/engineer/:engineerId',
   auth(userRole.User),
   projectController.deleteMyProjectEngineer,
 );
+
 
 // single project
 router.get('/:id', projectController.singleProject);
