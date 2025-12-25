@@ -404,6 +404,7 @@ const deleteMyProjectEngineer = async (
     throw new AppError(403, 'Unauthorized');
   }
 
+  // Remove engineer
   const updatedProject = await Project.findByIdAndUpdate(
     projectId,
     {
@@ -416,6 +417,19 @@ const deleteMyProjectEngineer = async (
     },
     { new: true },
   );
+
+  if (!updatedProject) {
+    throw new AppError(404, 'Project not found after update');
+  }
+
+  // If no engineers left & project pending → delete project
+  if (
+    updatedProject.status === 'pending' &&
+    updatedProject.engineers.length === 0
+  ) {
+    await Project.findByIdAndDelete(projectId);
+    return { message: 'Project deleted because no engineers left' };
+  }
 
   return updatedProject;
 };
