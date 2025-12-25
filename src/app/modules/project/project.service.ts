@@ -367,27 +367,52 @@ const addMyProjectEngineer = async (
 /* ======================================================
    DELETE PROJECT ENGINEER
 ====================================================== */
+// const deleteMyProjectEngineer = async (
+//   projectId: string,
+//   userId: string,
+//   engineerId: string,
+// ) => {
+//   const project = await Project.findById(projectId);
+//   if (!project) throw new AppError(404, 'Project not found');
+
+//   if (project.client.toString() !== userId)
+//     throw new AppError(403, 'Unauthorized');
+
+//   await Project.findByIdAndUpdate(projectId, {
+//     $pull: { engineers: { engineer: engineerId } },
+//   });
+
+//   return Project.findById(projectId);
+// };
+
 const deleteMyProjectEngineer = async (
   projectId: string,
   userId: string,
   engineerId: string,
 ) => {
+  // Validate ObjectIds
+  if (
+    !mongoose.Types.ObjectId.isValid(projectId) ||
+    !mongoose.Types.ObjectId.isValid(engineerId)
+  ) {
+    throw new AppError(400, 'Invalid project or engineer id');
+  }
+
+  // Find project & authorize
   const project = await Project.findById(projectId);
   if (!project) throw new AppError(404, 'Project not found');
 
-  if (project.client.toString() !== userId)
+  if (project.client.toString() !== userId) {
     throw new AppError(403, 'Unauthorized');
+  }
 
-  // await Project.findByIdAndUpdate(projectId, {
-  //   $pull: { engineers: { engineer: engineerId } },
-  // });
-
-  await Project.findByIdAndUpdate(
+  // Pull engineer from BOTH arrays
+  const updatedProject = await Project.findByIdAndUpdate(
     projectId,
     {
       $pull: {
         engineers: { engineer: engineerId },
-        approvedEngineers: { engineer: engineerId },
+        // approvedEngineers: { engineer: engineerId },
       },
       $set: {
         lastUpdated: new Date(),
@@ -396,7 +421,11 @@ const deleteMyProjectEngineer = async (
     { new: true },
   );
 
-  return Project.findById(projectId);
+  if (!updatedProject) {
+    throw new AppError(404, 'Project not found after update');
+  }
+
+  return updatedProject;
 };
 
 /* ======================================================
