@@ -25,6 +25,19 @@ const createProject = async (
     throw new AppError(400, 'Empty Team Engineer');
   }
 
+  //   if (!payload.engineers || payload.engineers.length === 0) {
+  //   throw new AppError(400, 'Empty Team Engineer');
+  // }
+
+  payload.engineers.forEach((eng: any, index: number) => {
+    if (!eng.allocatedHours || eng.allocatedHours <= 0) {
+      throw new AppError(
+        400,
+        `Engineer at position ${index + 1} must have allocatedHours greater than 0`,
+      );
+    }
+  });
+
   // Upload NDA
   if (file) {
     const upload = await fileUploader.uploadToCloudinary(file);
@@ -433,7 +446,6 @@ const deleteMyProjectEngineer = async (
 
   return updatedProject;
 };
-
 
 /* ======================================================
    SINGLE PROJECT
